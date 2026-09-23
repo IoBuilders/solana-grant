@@ -1,0 +1,1140 @@
+/**
+ * Program IDL in camelCase format in order to be used in JS/TS.
+ *
+ * Note that this is only a type helper and is not the actual IDL. The original
+ * IDL can be found at `target/idl/mint.json`.
+ */
+export type Mint = {
+  "address": "BgVv7zYbf3L4ECwaeNoNqD6unKWvQtgTwRJ2Dma7iSHQ",
+  "metadata": {
+    "name": "mint",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "batchMint",
+      "docs": [
+        "Mints, in a single instruction, `amounts[i]` tokens to the `i`-th destination",
+        "for every index `i` of the given Token-2022 mint. Runs the same checks as",
+        "`mint` (issuer role, active, functionality, whitelist) but skips snapshots.",
+        "Per-destination token accounts and whitelist PDAs are passed via",
+        "`remaining_accounts` (two per destination). Only a `ROLE_ISSUER` holder may call it."
+      ],
+      "discriminator": [
+        196,
+        91,
+        50,
+        129,
+        93,
+        48,
+        13,
+        186
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "assetConfigurationPda",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  115,
+                  115,
+                  101,
+                  116,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103,
+                  117,
+                  114,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                240,
+                182,
+                77,
+                149,
+                174,
+                242,
+                208,
+                54,
+                31,
+                138,
+                200,
+                30,
+                243,
+                31,
+                148,
+                113,
+                161,
+                240,
+                63,
+                40,
+                108,
+                82,
+                42,
+                48,
+                110,
+                115,
+                30,
+                160,
+                98,
+                125,
+                248,
+                52
+              ]
+            }
+          }
+        },
+        {
+          "name": "deactivatePda",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  97,
+                  99,
+                  116,
+                  105,
+                  118,
+                  97,
+                  116,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                238,
+                43,
+                105,
+                162,
+                163,
+                237,
+                139,
+                95,
+                81,
+                45,
+                69,
+                187,
+                195,
+                53,
+                53,
+                92,
+                147,
+                252,
+                127,
+                84,
+                5,
+                224,
+                26,
+                131,
+                233,
+                21,
+                47,
+                51,
+                149,
+                90,
+                20,
+                208
+              ]
+            }
+          }
+        },
+        {
+          "name": "mint",
+          "writable": true
+        },
+        {
+          "name": "mintAuthority",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "maxSupplyPda",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  97,
+                  120,
+                  95,
+                  115,
+                  117,
+                  112,
+                  112,
+                  108,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                75,
+                44,
+                228,
+                144,
+                179,
+                106,
+                27,
+                69,
+                65,
+                46,
+                52,
+                146,
+                123,
+                64,
+                70,
+                87,
+                44,
+                90,
+                237,
+                10,
+                226,
+                159,
+                198,
+                149,
+                16,
+                36,
+                81,
+                66,
+                184,
+                180,
+                29,
+                198
+              ]
+            }
+          }
+        },
+        {
+          "name": "transferControlModePda",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  97,
+                  110,
+                  115,
+                  102,
+                  101,
+                  114,
+                  95,
+                  99,
+                  111,
+                  110,
+                  116,
+                  114,
+                  111,
+                  108,
+                  95,
+                  109,
+                  111,
+                  100,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                39,
+                255,
+                173,
+                207,
+                102,
+                3,
+                77,
+                127,
+                203,
+                150,
+                188,
+                14,
+                86,
+                207,
+                133,
+                158,
+                217,
+                57,
+                254,
+                20,
+                232,
+                146,
+                113,
+                164,
+                190,
+                234,
+                43,
+                128,
+                246,
+                189,
+                25,
+                208
+              ]
+            }
+          }
+        },
+        {
+          "name": "assetClassVersionPda",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  115,
+                  115,
+                  101,
+                  116,
+                  95,
+                  99,
+                  108,
+                  97,
+                  115,
+                  115,
+                  95,
+                  118,
+                  101,
+                  114,
+                  115,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "asset_configuration_pda.asset_class_config_id",
+                "account": "assetConfiguration"
+              },
+              {
+                "kind": "account",
+                "path": "asset_configuration_pda.asset_class_version_id",
+                "account": "assetConfiguration"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                211,
+                123,
+                97,
+                49,
+                148,
+                61,
+                0,
+                123,
+                122,
+                206,
+                49,
+                38,
+                235,
+                135,
+                128,
+                117,
+                92,
+                177,
+                90,
+                249,
+                180,
+                1,
+                59,
+                22,
+                82,
+                69,
+                14,
+                21,
+                75,
+                204,
+                57,
+                168
+              ]
+            }
+          }
+        },
+        {
+          "name": "token2022Program",
+          "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+        },
+        {
+          "name": "authorityRolesPda",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  111,
+                  108,
+                  101,
+                  115
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                235,
+                41,
+                191,
+                132,
+                186,
+                2,
+                100,
+                233,
+                201,
+                22,
+                224,
+                63,
+                181,
+                155,
+                128,
+                170,
+                45,
+                56,
+                111,
+                156,
+                131,
+                234,
+                141,
+                38,
+                46,
+                129,
+                42,
+                229,
+                87,
+                122,
+                173,
+                44
+              ]
+            }
+          }
+        },
+        {
+          "name": "eventAuthority"
+        },
+        {
+          "name": "program"
+        }
+      ],
+      "args": [
+        {
+          "name": "amounts",
+          "type": {
+            "vec": "u64"
+          }
+        }
+      ]
+    },
+    {
+      "name": "mint",
+      "discriminator": [
+        51,
+        57,
+        225,
+        47,
+        182,
+        146,
+        137,
+        166
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "assetConfigurationPda",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  115,
+                  115,
+                  101,
+                  116,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103,
+                  117,
+                  114,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                240,
+                182,
+                77,
+                149,
+                174,
+                242,
+                208,
+                54,
+                31,
+                138,
+                200,
+                30,
+                243,
+                31,
+                148,
+                113,
+                161,
+                240,
+                63,
+                40,
+                108,
+                82,
+                42,
+                48,
+                110,
+                115,
+                30,
+                160,
+                98,
+                125,
+                248,
+                52
+              ]
+            }
+          }
+        },
+        {
+          "name": "deactivatePda",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  97,
+                  99,
+                  116,
+                  105,
+                  118,
+                  97,
+                  116,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                238,
+                43,
+                105,
+                162,
+                163,
+                237,
+                139,
+                95,
+                81,
+                45,
+                69,
+                187,
+                195,
+                53,
+                53,
+                92,
+                147,
+                252,
+                127,
+                84,
+                5,
+                224,
+                26,
+                131,
+                233,
+                21,
+                47,
+                51,
+                149,
+                90,
+                20,
+                208
+              ]
+            }
+          }
+        },
+        {
+          "name": "mint",
+          "writable": true
+        },
+        {
+          "name": "mintAuthority",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "destination",
+          "writable": true
+        },
+        {
+          "name": "transferControlModePda",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  97,
+                  110,
+                  115,
+                  102,
+                  101,
+                  114,
+                  95,
+                  99,
+                  111,
+                  110,
+                  116,
+                  114,
+                  111,
+                  108,
+                  95,
+                  109,
+                  111,
+                  100,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                39,
+                255,
+                173,
+                207,
+                102,
+                3,
+                77,
+                127,
+                203,
+                150,
+                188,
+                14,
+                86,
+                207,
+                133,
+                158,
+                217,
+                57,
+                254,
+                20,
+                232,
+                146,
+                113,
+                164,
+                190,
+                234,
+                43,
+                128,
+                246,
+                189,
+                25,
+                208
+              ]
+            }
+          }
+        },
+        {
+          "name": "destinationWhitelistPda",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  119,
+                  104,
+                  105,
+                  116,
+                  101,
+                  108,
+                  105,
+                  115,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              },
+              {
+                "kind": "account",
+                "path": "destination"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                39,
+                255,
+                173,
+                207,
+                102,
+                3,
+                77,
+                127,
+                203,
+                150,
+                188,
+                14,
+                86,
+                207,
+                133,
+                158,
+                217,
+                57,
+                254,
+                20,
+                232,
+                146,
+                113,
+                164,
+                190,
+                234,
+                43,
+                128,
+                246,
+                189,
+                25,
+                208
+              ]
+            }
+          }
+        },
+        {
+          "name": "maxSupplyPda",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  97,
+                  120,
+                  95,
+                  115,
+                  117,
+                  112,
+                  112,
+                  108,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                75,
+                44,
+                228,
+                144,
+                179,
+                106,
+                27,
+                69,
+                65,
+                46,
+                52,
+                146,
+                123,
+                64,
+                70,
+                87,
+                44,
+                90,
+                237,
+                10,
+                226,
+                159,
+                198,
+                149,
+                16,
+                36,
+                81,
+                66,
+                184,
+                180,
+                29,
+                198
+              ]
+            }
+          }
+        },
+        {
+          "name": "assetClassVersionPda",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  115,
+                  115,
+                  101,
+                  116,
+                  95,
+                  99,
+                  108,
+                  97,
+                  115,
+                  115,
+                  95,
+                  118,
+                  101,
+                  114,
+                  115,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "asset_configuration_pda.asset_class_config_id",
+                "account": "assetConfiguration"
+              },
+              {
+                "kind": "account",
+                "path": "asset_configuration_pda.asset_class_version_id",
+                "account": "assetConfiguration"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                211,
+                123,
+                97,
+                49,
+                148,
+                61,
+                0,
+                123,
+                122,
+                206,
+                49,
+                38,
+                235,
+                135,
+                128,
+                117,
+                92,
+                177,
+                90,
+                249,
+                180,
+                1,
+                59,
+                22,
+                82,
+                69,
+                14,
+                21,
+                75,
+                204,
+                57,
+                168
+              ]
+            }
+          }
+        },
+        {
+          "name": "authorityRolesPda",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  111,
+                  108,
+                  101,
+                  115
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                235,
+                41,
+                191,
+                132,
+                186,
+                2,
+                100,
+                233,
+                201,
+                22,
+                224,
+                63,
+                181,
+                155,
+                128,
+                170,
+                45,
+                56,
+                111,
+                156,
+                131,
+                234,
+                141,
+                38,
+                46,
+                129,
+                42,
+                229,
+                87,
+                122,
+                173,
+                44
+              ]
+            }
+          }
+        },
+        {
+          "name": "token2022Program",
+          "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "eventAuthority"
+        },
+        {
+          "name": "program"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "issued",
+      "discriminator": [
+        13,
+        203,
+        75,
+        37,
+        35,
+        96,
+        248,
+        250
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "emptyBatch",
+      "msg": "The batch must contain at least one destination"
+    },
+    {
+      "code": 6001,
+      "name": "invalidRemainingAccounts",
+      "msg": "Expected exactly two remaining accounts (destination + whitelist PDA) per destination"
+    },
+    {
+      "code": 6002,
+      "name": "amountOverflow",
+      "msg": "The sum of the batch amounts overflows u64"
+    }
+  ],
+  "types": [
+    {
+      "name": "assetConfiguration",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "assetClassConfigId",
+            "type": "u64"
+          },
+          {
+            "name": "assetClassVersionId",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "issued",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "operator",
+            "type": "pubkey"
+          },
+          {
+            "name": "to",
+            "type": "pubkey"
+          },
+          {
+            "name": "value",
+            "type": "u64"
+          }
+        ]
+      }
+    }
+  ]
+};

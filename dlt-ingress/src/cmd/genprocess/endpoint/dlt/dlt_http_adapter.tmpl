@@ -1,0 +1,35 @@
+package {{ ToLower .DLTEventName }}
+
+import (
+	"context"
+
+	"dlt-ingress/src/main/blockchain/port/model"
+	"dlt-ingress/src/main/{{ ToLower .BoundedContext }}/app/command/surikata/converter/{{ ToLower .DLTEventName }}"
+
+	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/api"
+	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/command"
+
+	"net/http"
+)
+
+type Endpoint struct {
+	commandBus command.Bus
+}
+
+func NewEndpoint(commandBus command.Bus) *Endpoint {
+	return &Endpoint{
+		commandBus: commandBus,
+	}
+}
+
+func (e *Endpoint) Listen(c context.Context, req *api.HttpAdapterRequest[model.ContractEvent]) (*api.HttpAdapterResponse[api.EmptyResponse], error) {
+
+	_, err := e.commandBus.Dispatch(c, &{{ ToLower .DLTEventName }}converter.Command{
+		ContractEvent: *req.Body,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+	return api.NewEmptyHttpAdapterResponse(http.StatusAccepted), nil
+}

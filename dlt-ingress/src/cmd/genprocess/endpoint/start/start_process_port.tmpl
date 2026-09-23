@@ -1,0 +1,7 @@
+package start{{ ToLower .Name }}process
+
+import "github.com/gin-gonic/gin"
+
+type {{ .Name }}er interface {
+	{{ .Name }}(c *gin.Context)
+}

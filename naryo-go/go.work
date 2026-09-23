@@ -1,0 +1,10 @@
+go 1.26.1
+
+use (
+	./broadcaster-http
+	./broadcaster-kafka
+	./broadcaster-rabbitmq
+	./core
+	./persistence-gorm
+	./server
+)

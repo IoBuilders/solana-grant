@@ -1,0 +1,14 @@
+package {{ ToLower .DLTEventName }}converter
+
+import (
+	"dlt-ingress/src/main/blockchain/port/model"
+	"dlt-ingress/src/main/{{ ToLower .BoundedContext }}/domain/{{ .ExtraPath }}{{ ToLower .Entity }}"
+)
+
+type Command struct {
+	model.ContractEvent
+}
+
+type Response struct {
+	{{ ToLower .Entity }}.{{ .DLTEventName }}DLTEvent
+}

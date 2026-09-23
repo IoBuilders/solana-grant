@@ -1,0 +1,25 @@
+use anchor_lang::prelude::*;
+
+#[error_code]
+pub enum ErrorCode {
+    #[msg("Signer is not the current factory manager")]
+    NotManager,
+    #[msg("Signer is not the pending manager")]
+    NotPendingManager,
+    #[msg("Factory is paused")]
+    FactoryPaused,
+    #[msg("Factory is not paused")]
+    FactoryNotPaused,
+    #[msg("Signer is not the current asset class owner")]
+    NotOwner,
+    #[msg("Signer is not the pending asset class owner")]
+    NotPendingOwner,
+    #[msg("Version must be the asset class's latest version + 1")]
+    InvalidVersion,
+    #[msg("Asset class version is not in Draft state")]
+    VersionNotDraft,
+    #[msg("Functionality is past the mask capacity")]
+    FunctionalityOutOfBounds,
+    #[msg("Arithmetic overflow")]
+    Overflow,
+}

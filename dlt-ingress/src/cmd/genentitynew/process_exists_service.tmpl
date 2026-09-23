@@ -1,0 +1,30 @@
+package service{{ ToLower .Entity }}
+
+import (
+	"context"
+	"dlt-ingress/src/main/{{ ToLower .BoundedContext }}/internal/domain/{{ ToLower .ExtraPath }}{{ .FolderName }}"
+
+	"github.com/google/uuid"
+)
+
+type Exists struct {
+	repo {{ ToLower .Entity }}.Repository
+}
+
+type ExistsInterface interface {
+	Execute(ctx context.Context, {{ ToLowerFirst .Entity }}Id uuid.UUID) (*{{ ToLower .Entity }}.{{ .Entity }}, error)
+}
+
+func NewExists(repo {{ ToLower .Entity }}.Repository) *Exists {
+	return &Exists{repo: repo}
+}
+
+func (s *Exists) Execute(ctx context.Context, {{ ToLowerFirst .Entity }}Id uuid.UUID) (*{{ ToLower .Entity }}.{{ .Entity }}, error) {
+	entity, err := s.repo.FindByIdPreload(ctx, {{ ToLowerFirst .Entity }}Id)
+	if err != nil {
+		return nil, err
+	}
+	return entity, nil
+}
+
+var _ ExistsInterface = (*Exists)(nil)

@@ -1,0 +1,28 @@
+//go:build test
+
+package mockservice{{ ToLower .Entity }}
+
+import (
+	"context"
+
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/mock"
+	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/domain/base"
+
+	"dlt-ingress/src/main/{{ ToLower .BoundedContext }}/internal/domain/{{ ToLower .ExtraPath }}{{ .FolderName }}"
+	"dlt-ingress/src/main/{{ ToLower .BoundedContext }}/internal/domain/{{ ToLower .ExtraPath }}{{ .FolderName }}/service"
+)
+
+type StatusCheckMock struct {
+	mock.Mock
+}
+
+func (m *StatusCheckMock) Execute(ctx context.Context, processId uuid.UUID, expected base.ProcessStatus) (*{{ ToLower .Entity }}.{{ .Entity }}, error) {
+	args := m.Called(ctx, processId, expected)
+	if args.Get(0) == nil {
+		return nil, args.Get(1).(error)
+	}
+	return args.Get(0).(*{{ ToLower .Entity }}.{{ .Entity }}), nil
+}
+
+var _ service{{ ToLower .Entity }}.StatusCheckInterface = (*StatusCheckMock)(nil)

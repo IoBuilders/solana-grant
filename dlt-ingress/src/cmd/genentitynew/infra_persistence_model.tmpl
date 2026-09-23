@@ -1,0 +1,11 @@
+package {{ ToLower .Entity }}repo
+
+import (
+	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/port/repository/base"
+)
+
+type {{ .Entity }} struct {
+	baserepo.Model
+	Name string `gorm:"type:varchar(255) not null"`
+	//TODO: AUTOGENERATE: Add persistence fields and remove me
+}

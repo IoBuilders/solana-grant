@@ -1,0 +1,32 @@
+[package]
+name = "treasury"
+version = "0.1.0"
+description = "Created with Anchor"
+edition = "2021"
+license.workspace = true
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "treasury"
+
+[features]
+default = []
+cpi = ["no-entrypoint"]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+anchor-debug = []
+custom-heap = []
+custom-panic = []
+idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build", "common/idl-build"]
+
+[dependencies]
+anchor-lang = { version = "1.0.2", features = ["init-if-needed", "event-cpi"] }
+anchor-spl = "1.0.2"
+common = { path = "../common" }
+bond = { path = "../bond", features = ["cpi"] }
+coupon = { path = "../coupon", features = ["cpi"] }
+snapshot = { path = "../snapshot", features = ["cpi"] }
+
+[lints.rust]
+unexpected_cfgs = { level = "allow" }

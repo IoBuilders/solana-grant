@@ -1,0 +1,10 @@
+package {{ ToLower .Action }}{{ ToLower .Entity }}processrepo
+
+import (
+	"dlt-ingress/src/main/{{ ToLower .BoundedContext }}/domain/process/{{ ToLower .Action }}{{ ToLower .Entity }}"
+	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/port/repository"
+)
+
+type Repository interface {
+	repository.BaseRepository[Repository, {{ ToLower .Action }}{{ ToLower .Entity }}process.{{ .Action }}{{ .Entity }}Process]
+}

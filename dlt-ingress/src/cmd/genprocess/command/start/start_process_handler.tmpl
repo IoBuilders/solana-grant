@@ -1,0 +1,53 @@
+package start{{ ToLower .Name }}
+
+import (
+	"context"
+	{{- if not .IsErrorRefactor}}
+	"dlt-ingress/src/main/{{ ToLower .BoundedContext }}/domain/domainerrors"
+	{{- end}}
+	"dlt-ingress/src/main/{{ ToLower .BoundedContext }}/domain/process/{{ ToLower .Name }}"
+	"dlt-ingress/src/main/{{ ToLower .BoundedContext }}/port/repository/process/{{ ToLower .Name }}"
+
+	"github.com/google/uuid"
+
+	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/domain/callback"
+	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/event"
+)
+
+type CommandHandler struct {
+	eventBus    event.Bus
+	processRepo {{ ToLower .Name}}processrepo.Repository
+}
+
+func NewCommandHandler(processRepo {{ ToLower .Name }}processrepo.Repository, eventBus event.Bus) *CommandHandler {
+	return &CommandHandler{processRepo: processRepo, eventBus: eventBus}
+}
+
+func (h *CommandHandler) Handle(ctx context.Context, cmd *Command) (*Response, {{if .IsErrorRefactor}}error{{else}}*domainerrors.{{ .BoundedContext }}Error{{end}}) {
+	newProcess := {{ ToLower .Name }}process.New(func(process *{{ ToLower .Name }}process.{{ .Name }}Process) {
+		processId := uuid.New()
+		process.BaseProcess.Id = processId
+		process.ProcessId = processId
+		//TODO: AUTOGENERATE: Add entity fields and remove me
+	if cmd.CallbackUrl != "" {
+			process.BaseProcess.Callback = *callback.New(func(cb *callback.Callback) {
+				cb.ProcessId = processId
+				cb.Url = cmd.CallbackUrl
+			})
+		}
+	})
+	err := h.processRepo.Create(ctx, newProcess)
+	if err != nil {
+		return nil,	{{if .IsErrorRefactor}}err{{else}}err.(*domainerrors.{{ .BoundedContext }}Error){{end}}
+	}
+	evt := {{ ToLower .Name }}process.StartedEvent{
+		ProcessId: newProcess.ProcessId,
+		//TODO: AUTOGENERATE: Add event fields and remove me
+		BaseEvent:     *event.NewBaseEvent(),
+	}
+	if evtErr := h.eventBus.Publish(ctx, evt); evtErr != nil {
+		return nil, {{if .IsErrorRefactor}}evtErr{{else}}domainerrors.NewPublishError(evtErr, evt){{end}}
+	}
+
+	return &Response{evt}, nil
+}

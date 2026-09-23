@@ -1,0 +1,56 @@
+version: 2
+
+run:
+  timeout: 5m
+  tests: true
+
+linters:
+  settings:
+    importas:
+      no-extra-aliases: true
+      alias:
+        - pkg: "gitlab.com/iobuilders/projects/eng/naryo-go/core/domain/filter"
+          alias: domainfilter
+        - pkg: "gitlab.com/iobuilders/projects/eng/naryo-go/core/app/mapping"
+          alias: coremapping
+        - pkg: "gitlab.com/iobuilders/projects/eng/naryo-go/core/app/store"
+          alias: appstore
+        - pkg: "gitlab.com/iobuilders/projects/eng/naryo-go/core/infrastructure/config"
+          alias: coreconfig
+        - pkg: "gitlab.com/iobuilders/projects/eng/naryo-go/core/domain/broadcaster"
+          alias: corebroadcaster
+        - pkg: "gitlab.com/iobuilders/projects/eng/naryo-go/core/app/configurationmanager"
+          alias: coreconfigurationmanager
+        - pkg: "gitlab.com/iobuilders/projects/eng/naryo-go/core/app/descriptor"
+          alias: coredescriptor
+        - pkg: "gitlab.com/iobuilders/projects/eng/naryo-go/core/app/sourceprovider"
+          alias: coresourceprovider
+        - pkg: "gitlab.com/iobuilders/projects/eng/naryo-go/core/app/configurationmapper"
+          alias: configurationmapperregistry
+    staticcheck:
+      checks:
+        - '-ST1001'
+  enable:
+    - govet
+    - errcheck
+    - staticcheck
+    - ineffassign
+    - bodyclose
+    - importas
+    - exhaustive
+
+issues:
+  exclude-dirs:
+    - vendor
+  exclude-files:
+    - "mock_.*.go"
+  exclude-use-default: false
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  exclude:
+    - "should have comment"
+
+output:
+  formats:
+    colored-line-number: { }
+  sort-results: true

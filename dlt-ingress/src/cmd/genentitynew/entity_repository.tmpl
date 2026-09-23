@@ -1,0 +1,9 @@
+package {{ ToLower .Entity }}
+
+import (
+	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/port/repository"
+)
+
+type Repository interface {
+	repository.BaseRepository[Repository, {{ .Entity }}]
+}

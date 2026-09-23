@@ -1,0 +1,10 @@
+naryo:
+  httpClient:
+    maxIdleConnections: 10
+    keepAliveDuration: 30s
+    connectTimeout: 5s
+    readTimeout: 10s
+    writeTimeout: 10s
+    callTimeout: 15s
+    pingInterval: 20s
+    retryOnConnectionFailure: false

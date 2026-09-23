@@ -1,0 +1,33 @@
+[package]
+name = "hold"
+version = "0.1.0"
+description = "Created with Anchor"
+edition = "2021"
+license.workspace = true
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "hold"
+
+[features]
+default = []
+cpi = ["no-entrypoint"]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+anchor-debug = []
+custom-heap = []
+custom-panic = []
+idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build", "common/idl-build"]
+
+[dependencies]
+anchor-lang = { version = "1.0.2", features = ["init-if-needed", "event-cpi"] }
+anchor-spl = "1.0.2"
+spl-token-2022-interface = "=3.0.1"
+common = { path = "../common" }
+freeze = { path = "../freeze", features = ["cpi"] }
+transfer-control = { path = "../transfer-control", features = ["cpi"] }
+operations = { path = "../operations", features = ["cpi"] }
+
+[lints.rust]
+unexpected_cfgs = { level = "allow" }

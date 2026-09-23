@@ -1,0 +1,40 @@
+package {{ ToLower .Action }}{{ ToLower .Entity }}processrepo
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"dlt-ingress/src/main/{{ ToLower .BoundedContext }}/domain/process/{{ ToLower .Action }}{{ ToLower .Entity }}"
+	"github.com/google/uuid"
+	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/db"
+	{{- if .IsErrorRefactor}}
+	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/domain/domainerrors"
+	{{- else}}
+	"dlt-ingress/src/main/{{ ToLower .BoundedContext }}/domain/domainerrors"
+	{{- end}}
+	"gorm.io/gorm"
+)
+
+type PostgresRepository struct {
+	db *gorm.DB
+	tm db.TransactionManager
+}
+
+func NewPostgres(db *gorm.DB, tm db.TransactionManager) *PostgresRepository {
+	return &PostgresRepository{
+		db: db,
+		tm: tm,
+	}
+}
+
+func (r *PostgresRepository) FindByBaseProcessId(ctx context.Context, id uuid.UUID) (*{{ ToLower .Action }}{{ ToLower .Entity }}process.{{ .Action }}{{ .Entity }}Process, error) {
+	process := {{ ToLower .Action }}{{ ToLower .Entity }}process.{{ .Action }}{{ .Entity }}Process{}
+	result := r.getDB(ctx).Preload("BaseProcess").Where("process_id = ?", id).First(&process)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, domainerrors.{{if .IsErrorRefactor}}NewEntityNotFoundDomainError("Process", id){{else}}NewEntityNotFoundError("Process", id, nil){{end}}
+		}
+		return nil, fmt.Errorf("failed to fetch process: %w", result.Error)
+	}
+	return &process, nil
+}

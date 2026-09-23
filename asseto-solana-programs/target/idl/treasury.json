@@ -1,0 +1,1390 @@
+{
+  "address": "G71RRNtr2PLZ9Tbmp9CKnxghf3aMoasUwLGPb2u7BytA",
+  "metadata": {
+    "name": "treasury",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "pay_coupon",
+      "discriminator": [
+        235,
+        226,
+        45,
+        115,
+        95,
+        34,
+        46,
+        110
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "asset_configuration_pda",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  115,
+                  115,
+                  101,
+                  116,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103,
+                  117,
+                  114,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                240,
+                182,
+                77,
+                149,
+                174,
+                242,
+                208,
+                54,
+                31,
+                138,
+                200,
+                30,
+                243,
+                31,
+                148,
+                113,
+                161,
+                240,
+                63,
+                40,
+                108,
+                82,
+                42,
+                48,
+                110,
+                115,
+                30,
+                160,
+                98,
+                125,
+                248,
+                52
+              ]
+            }
+          }
+        },
+        {
+          "name": "deactivate_pda",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  97,
+                  99,
+                  116,
+                  105,
+                  118,
+                  97,
+                  116,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                238,
+                43,
+                105,
+                162,
+                163,
+                237,
+                139,
+                95,
+                81,
+                45,
+                69,
+                187,
+                195,
+                53,
+                53,
+                92,
+                147,
+                252,
+                127,
+                84,
+                5,
+                224,
+                26,
+                131,
+                233,
+                21,
+                47,
+                51,
+                149,
+                90,
+                20,
+                208
+              ]
+            }
+          }
+        },
+        {
+          "name": "mint"
+        },
+        {
+          "name": "treasury_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  101,
+                  97,
+                  115,
+                  117,
+                  114,
+                  121,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "treasury_authority",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  101,
+                  97,
+                  115,
+                  117,
+                  114,
+                  121,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "payment_mint"
+        },
+        {
+          "name": "treasury_token_account",
+          "writable": true
+        },
+        {
+          "name": "holder_payment_account",
+          "writable": true
+        },
+        {
+          "name": "bond_terms",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  111,
+                  110,
+                  100,
+                  95,
+                  116,
+                  101,
+                  114,
+                  109,
+                  115
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                116,
+                0,
+                72,
+                143,
+                85,
+                49,
+                115,
+                234,
+                66,
+                223,
+                13,
+                53,
+                47,
+                220,
+                177,
+                250,
+                156,
+                201,
+                51,
+                16,
+                149,
+                156,
+                39,
+                140,
+                253,
+                210,
+                82,
+                254,
+                7,
+                250,
+                186,
+                7
+              ]
+            }
+          }
+        },
+        {
+          "name": "coupon",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  117,
+                  112,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              },
+              {
+                "kind": "arg",
+                "path": "coupon_id"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                167,
+                98,
+                173,
+                126,
+                119,
+                180,
+                215,
+                106,
+                2,
+                46,
+                241,
+                208,
+                13,
+                86,
+                8,
+                91,
+                213,
+                185,
+                63,
+                97,
+                157,
+                152,
+                222,
+                167,
+                130,
+                194,
+                158,
+                201,
+                73,
+                76,
+                82,
+                206
+              ]
+            }
+          }
+        },
+        {
+          "name": "snapshot_merkle_root",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  110,
+                  97,
+                  112,
+                  115,
+                  104,
+                  111,
+                  116,
+                  95,
+                  109,
+                  101,
+                  114,
+                  107,
+                  108,
+                  101,
+                  95,
+                  114,
+                  111,
+                  111,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              },
+              {
+                "kind": "account",
+                "path": "coupon.snapshot_id",
+                "account": "Coupon"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                10,
+                107,
+                223,
+                164,
+                3,
+                187,
+                104,
+                46,
+                78,
+                61,
+                30,
+                172,
+                109,
+                69,
+                28,
+                224,
+                240,
+                205,
+                168,
+                113,
+                10,
+                68,
+                9,
+                225,
+                67,
+                66,
+                92,
+                96,
+                105,
+                114,
+                65,
+                54
+              ]
+            }
+          }
+        },
+        {
+          "name": "coupon_paid",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  117,
+                  112,
+                  111,
+                  110,
+                  95,
+                  112,
+                  97,
+                  105,
+                  100
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              },
+              {
+                "kind": "arg",
+                "path": "coupon_id"
+              },
+              {
+                "kind": "arg",
+                "path": "account"
+              }
+            ]
+          }
+        },
+        {
+          "name": "asset_class_version_pda",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  115,
+                  115,
+                  101,
+                  116,
+                  95,
+                  99,
+                  108,
+                  97,
+                  115,
+                  115,
+                  95,
+                  118,
+                  101,
+                  114,
+                  115,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "asset_configuration_pda.asset_class_config_id",
+                "account": "AssetConfiguration"
+              },
+              {
+                "kind": "account",
+                "path": "asset_configuration_pda.asset_class_version_id",
+                "account": "AssetConfiguration"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                211,
+                123,
+                97,
+                49,
+                148,
+                61,
+                0,
+                123,
+                122,
+                206,
+                49,
+                38,
+                235,
+                135,
+                128,
+                117,
+                92,
+                177,
+                90,
+                249,
+                180,
+                1,
+                59,
+                22,
+                82,
+                69,
+                14,
+                21,
+                75,
+                204,
+                57,
+                168
+              ]
+            }
+          }
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "authority_roles_pda",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  111,
+                  108,
+                  101,
+                  115
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                235,
+                41,
+                191,
+                132,
+                186,
+                2,
+                100,
+                233,
+                201,
+                22,
+                224,
+                63,
+                181,
+                155,
+                128,
+                170,
+                45,
+                56,
+                111,
+                156,
+                131,
+                234,
+                141,
+                38,
+                46,
+                129,
+                42,
+                229,
+                87,
+                122,
+                173,
+                44
+              ]
+            }
+          }
+        },
+        {
+          "name": "event_authority"
+        },
+        {
+          "name": "program"
+        }
+      ],
+      "args": [
+        {
+          "name": "coupon_id",
+          "type": "u64"
+        },
+        {
+          "name": "account",
+          "type": "pubkey"
+        },
+        {
+          "name": "balance",
+          "type": "u64"
+        },
+        {
+          "name": "merkle_proof",
+          "type": {
+            "vec": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "set_payment_token",
+      "discriminator": [
+        155,
+        213,
+        140,
+        249,
+        53,
+        59,
+        20,
+        5
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "asset_configuration_pda",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  115,
+                  115,
+                  101,
+                  116,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103,
+                  117,
+                  114,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                240,
+                182,
+                77,
+                149,
+                174,
+                242,
+                208,
+                54,
+                31,
+                138,
+                200,
+                30,
+                243,
+                31,
+                148,
+                113,
+                161,
+                240,
+                63,
+                40,
+                108,
+                82,
+                42,
+                48,
+                110,
+                115,
+                30,
+                160,
+                98,
+                125,
+                248,
+                52
+              ]
+            }
+          }
+        },
+        {
+          "name": "deactivate_pda",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  97,
+                  99,
+                  116,
+                  105,
+                  118,
+                  97,
+                  116,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                238,
+                43,
+                105,
+                162,
+                163,
+                237,
+                139,
+                95,
+                81,
+                45,
+                69,
+                187,
+                195,
+                53,
+                53,
+                92,
+                147,
+                252,
+                127,
+                84,
+                5,
+                224,
+                26,
+                131,
+                233,
+                21,
+                47,
+                51,
+                149,
+                90,
+                20,
+                208
+              ]
+            }
+          }
+        },
+        {
+          "name": "mint"
+        },
+        {
+          "name": "treasury_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  101,
+                  97,
+                  115,
+                  117,
+                  114,
+                  121,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "coupon_counter",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  117,
+                  112,
+                  111,
+                  110,
+                  95,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                167,
+                98,
+                173,
+                126,
+                119,
+                180,
+                215,
+                106,
+                2,
+                46,
+                241,
+                208,
+                13,
+                86,
+                8,
+                91,
+                213,
+                185,
+                63,
+                97,
+                157,
+                152,
+                222,
+                167,
+                130,
+                194,
+                158,
+                201,
+                73,
+                76,
+                82,
+                206
+              ]
+            }
+          }
+        },
+        {
+          "name": "payment_mint"
+        },
+        {
+          "name": "asset_class_version_pda",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  115,
+                  115,
+                  101,
+                  116,
+                  95,
+                  99,
+                  108,
+                  97,
+                  115,
+                  115,
+                  95,
+                  118,
+                  101,
+                  114,
+                  115,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "asset_configuration_pda.asset_class_config_id",
+                "account": "AssetConfiguration"
+              },
+              {
+                "kind": "account",
+                "path": "asset_configuration_pda.asset_class_version_id",
+                "account": "AssetConfiguration"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                211,
+                123,
+                97,
+                49,
+                148,
+                61,
+                0,
+                123,
+                122,
+                206,
+                49,
+                38,
+                235,
+                135,
+                128,
+                117,
+                92,
+                177,
+                90,
+                249,
+                180,
+                1,
+                59,
+                22,
+                82,
+                69,
+                14,
+                21,
+                75,
+                204,
+                57,
+                168
+              ]
+            }
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "authority_roles_pda",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  111,
+                  108,
+                  101,
+                  115
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                235,
+                41,
+                191,
+                132,
+                186,
+                2,
+                100,
+                233,
+                201,
+                22,
+                224,
+                63,
+                181,
+                155,
+                128,
+                170,
+                45,
+                56,
+                111,
+                156,
+                131,
+                234,
+                141,
+                38,
+                46,
+                129,
+                42,
+                229,
+                87,
+                122,
+                173,
+                44
+              ]
+            }
+          }
+        },
+        {
+          "name": "event_authority"
+        },
+        {
+          "name": "program"
+        }
+      ],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "CouponPaidMarker",
+      "discriminator": [
+        190,
+        24,
+        251,
+        23,
+        150,
+        191,
+        73,
+        186
+      ]
+    },
+    {
+      "name": "TreasuryConfig",
+      "discriminator": [
+        124,
+        54,
+        212,
+        227,
+        213,
+        189,
+        168,
+        41
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "CouponPaid",
+      "discriminator": [
+        11,
+        228,
+        86,
+        67,
+        111,
+        22,
+        107,
+        226
+      ]
+    },
+    {
+      "name": "PaymentTokenSet",
+      "discriminator": [
+        235,
+        37,
+        70,
+        239,
+        23,
+        99,
+        68,
+        232
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "NegativeElapsedTime",
+      "msg": "Coupon payment_date is earlier than bond issuance_date"
+    },
+    {
+      "code": 6001,
+      "name": "AmountOverflow",
+      "msg": "Computed coupon amount overflows u64"
+    },
+    {
+      "code": 6002,
+      "name": "CouponNotMature",
+      "msg": "Coupon payment_date has not been reached yet"
+    },
+    {
+      "code": 6003,
+      "name": "ClaimsInProgress",
+      "msg": "Payment token cannot be changed while claims are in progress for the current coupon"
+    }
+  ],
+  "types": [
+    {
+      "name": "AssetConfiguration",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "asset_class_config_id",
+            "type": "u64"
+          },
+          {
+            "name": "asset_class_version_id",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BondTerms",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "interest_rate",
+            "type": "u64"
+          },
+          {
+            "name": "interest_rate_decimals",
+            "type": "u8"
+          },
+          {
+            "name": "par_value",
+            "type": "u64"
+          },
+          {
+            "name": "par_value_decimals",
+            "type": "u8"
+          },
+          {
+            "name": "minimum_denomination",
+            "type": "u64"
+          },
+          {
+            "name": "issuance_date",
+            "type": "i64"
+          },
+          {
+            "name": "day_count_convention",
+            "type": {
+              "defined": {
+                "name": "DayCountConvention"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Coupon",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "snapshot_id",
+            "type": "u64"
+          },
+          {
+            "name": "period_start_date",
+            "type": "i64"
+          },
+          {
+            "name": "period_end_date",
+            "type": "i64"
+          },
+          {
+            "name": "payment_date",
+            "type": "i64"
+          },
+          {
+            "name": "interest_rate_override",
+            "type": {
+              "option": "u64"
+            }
+          },
+          {
+            "name": "interest_rate_override_decimals",
+            "type": {
+              "option": "u8"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "CouponPaid",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "coupon_id",
+            "type": "u64"
+          },
+          {
+            "name": "holder_token_account",
+            "type": "pubkey"
+          },
+          {
+            "name": "payment_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "payer",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CouponPaidMarker",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DayCountConvention",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Actual360"
+          },
+          {
+            "name": "Actual365"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PaymentTokenSet",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "payment_mint",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SnapshotMerkleRoot",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "merkle_root",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "TreasuryConfig",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "payment_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "payment_mint_decimals",
+            "type": "u8"
+          },
+          {
+            "name": "locked_for_coupon_id",
+            "type": "u64"
+          }
+        ]
+      }
+    }
+  ]
+}

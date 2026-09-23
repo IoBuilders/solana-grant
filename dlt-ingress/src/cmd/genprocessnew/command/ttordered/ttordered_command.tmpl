@@ -1,0 +1,16 @@
+package ttordered{{ ToLower .Name }}
+
+import (
+	"dlt-ingress/src/main/{{ ToLower .BoundedContext }}/internal/domain/process/{{ ToLower .Name }}"
+
+	"github.com/google/uuid"
+)
+
+type Command struct {
+	ProcessId       uuid.UUID
+	TransactionHash string
+}
+
+type Response struct {
+	{{ ToLower .Name }}process.TransitToOrderedEvent
+}

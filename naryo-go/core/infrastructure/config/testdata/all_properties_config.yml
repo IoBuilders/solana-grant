@@ -1,0 +1,70 @@
+naryo:
+  httpClient:
+    maxIdleConnections: 10
+    keepAliveDuration: 30s
+    connectTimeout: 5s
+    readTimeout: 10s
+    writeTimeout: 10s
+    callTimeout: 15s
+    pingInterval: 20s
+    retryOnConnectionFailure: true
+
+  nodes:
+    - id: "00000000-0000-0000-0000-000000000001"
+      name: "solana-node"
+      type: "SOLANA"
+      connection:
+        type: "WS"
+        endpoint:
+          url: "ws://localhost:8900"
+        retry:
+          maxRetries: 5
+          initialDelay: 1s
+          maxDelay: 30s
+          multiplier: 2.0
+      subscription:
+        method: "PUBSUB"
+        initialSlot: 100
+        interval: 1s
+
+  broadcasting:
+    configuration:
+      - id: "00000000-0000-0000-0000-000000000002"
+        type: "HTTP"
+        endpoint:
+          url: "http://localhost:8080"
+        retry:
+          maxRetries: 5
+          initialDelay: 1s
+          maxDelay: 30s
+          multiplier: 2.0
+    broadcasters:
+      - id: "00000000-0000-0000-0000-000000000003"
+        configurationId: "00000000-0000-0000-0000-000000000002"
+        target:
+          type: "BLOCK"
+          destinations:
+            - "/events"
+
+  filters:
+    - id: "00000000-0000-0000-0000-000000000004"
+      name: "tx-filter"
+      nodeId: "00000000-0000-0000-0000-000000000001"
+      type: "TRANSACTION"
+      identifierType: "HASH"
+      value:
+        - "0xabc123"
+      statuses:
+        - "FAILED"
+
+  stores:
+    - nodeId: "00000000-0000-0000-0000-000000000001"
+      type: "GORM"
+      features:
+        - type: "EVENT"
+          strategy: "BLOCK_BASED"
+          targets:
+            - type: "TRANSACTION"
+              destination: "transactions"
+        - type: "FILTER_SYNC"
+          destination: "filters"

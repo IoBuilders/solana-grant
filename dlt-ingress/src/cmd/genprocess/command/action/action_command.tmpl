@@ -1,0 +1,20 @@
+package {{ ToLower .Name }}
+
+import (
+	"dlt-ingress/src/main/{{ ToLower .BoundedContext }}/domain/{{ .ExtraPath }}{{ ToLower .Entity }}"
+	"time"
+
+	"github.com/google/uuid"
+)
+
+type Command struct {
+	ProcessId uuid.UUID
+	//DltAccountId string
+	BlockTimestamp time.Time
+	//TODO: AUTOGENERATE: complete command fields and remove this comment
+
+}
+
+type Response struct {
+	{{ ToLower .Entity }}.{{ ToDone .Action }}Event
+}

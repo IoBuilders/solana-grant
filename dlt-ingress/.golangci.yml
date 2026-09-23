@@ -1,0 +1,92 @@
+version: "2"
+
+run:
+  timeout: 5m
+  tests: true
+  relative-path-mode: gomod
+
+linters:
+  default: none
+  enable:
+    - govet
+    - errcheck
+    - staticcheck
+    - ineffassign
+    - bodyclose
+    - importas
+    - depguard
+    - forbidigo
+  settings:
+    importas:
+      no-extra-aliases: true
+      alias:
+        - pkg: gitlab.com/iobuilders/projects/eng/o2d/asseto-contracts-wrappers/v9/src/main/asset-tokenization-studio/hold/holdmanagement
+          alias: holdwrapper
+        - pkg: gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/api
+          alias: coreApi
+        - pkg: dlt-ingress/src/main/dltingress/domain/transaction
+          alias: transactionDomain
+        - pkg: dlt-ingress/src/main/dltingress/port/repository/svmtransactionrepo
+          alias: svmtransactionrepo
+        - pkg: gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/common
+          alias: coreCommon
+        - pkg: gitlab.com/iobuilders/projects/eng/o2d/asseto-contracts-wrappers/v9/src/main/asset-tokenization-studio/hold/holdtokenholder
+          alias: holdtokenholder
+        - pkg: github.com/ethereum/go-ethereum/common
+          alias: goethcommon
+        - pkg: github.com/ethereum/go-ethereum/core/types
+          alias: goethtypes
+        - pkg: github.com/gagliardetto/solana-go
+          alias: solanago
+        - pkg: gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/domain/domainerrors
+          alias: coredomainerrors
+        - pkg: gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/app/query/getfailedevents
+          alias: querygetfailedevents
+        - pkg: dlt-ingress/src/main/assetlifecycle/internal/app/command/lifecycleevent/cashdistribution/model
+          alias: cashdistributionmodel
+    depguard:
+      rules:
+        atlas-provider-no-domain:
+          files:
+            - "**/atlas/provider.go"
+          deny:
+            - pkg: "dlt-ingress/src/main/issuance/internal/domain"
+              desc: "provider.go must use persistence models from /infra/repository, not domain structs — domain structs lack GORM tags and generate wrong column types"
+            - pkg: "dlt-ingress/src/main/assetlifecycle/internal/domain"
+              desc: "provider.go must use persistence models from /infra/repository, not domain structs — domain structs lack GORM tags and generate wrong column types"
+    staticcheck:
+      checks:
+        - '-ST1001'
+        - '-SA1019'
+    forbidigo:
+      forbid:
+        - pattern: '^errors\.New$'
+          msg: "use domain errors in app and domain layers instead of errors.New"
+        - pattern: '^fmt\.Errorf$'
+          msg: "use domain errors in app and domain layers instead of fmt.Errorf"
+        - pattern: '^config\.AppConfig\.DltIngress\.Networks$'
+          msg: "do not use first Network from configuration. Get NetworkId from request or from domain. Check examples in which it is already done"
+  exclusions:
+    warn-unused: true
+    paths:
+      - vendor
+      - "mock_.*.go"
+    rules:
+      - path-except: 'src/main/.+/(app|domain)/'
+        text: "use domain errors in app and domain layers"
+        linters:
+          - forbidigo
+      - path: 'src/main/blockchain/'
+        linters:
+          - forbidigo
+      - path: 'src/main/dltingress/'
+        text: "do not use first Network from configuration"
+        linters:
+          - forbidigo
+      - text: "should have comment"
+        linters:
+          - staticcheck
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0

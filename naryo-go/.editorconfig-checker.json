@@ -1,0 +1,10 @@
+{
+	"Exclude": [
+		"^\\.go/",
+		"^\\.go-build/",
+		"^\\.cache/",
+		"^\\.npm/",
+		"^reports/",
+		"^node_modules/"
+	]
+}

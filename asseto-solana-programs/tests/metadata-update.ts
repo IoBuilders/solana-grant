@@ -1,0 +1,410 @@
+import * as anchor from "@anchor-lang/core";
+import { AnchorError } from "@anchor-lang/core";
+import { PublicKey } from "@solana/web3.js";
+import { assert } from "chai";
+import { deployMint } from "./program_helpers/deploy_helper";
+import { setDeactivateMarker } from "./program_helpers/deactivate/deactivate_pda_helper";
+import {
+  getMetadataFieldRemovedEvent,
+  getMetadataFieldUpdatedEvent,
+  removeMetadataField,
+  updateMetadataField,
+} from "./program_helpers/metadata_update/metadata_update_instruction_helper";
+import { getTokenMetadata, setMintPaused } from "./program_helpers/spl_token_helper";
+import { beforeEach } from "mocha";
+import {
+  ASSET_CLASS_VERSION_STATE_DRAFT,
+  setAssetClassVersionForMint,
+} from "./program_helpers/factory/factory_pda_helper";
+import {
+  DEACTIVATE_DEACTIVATE,
+  METADATA_UPDATE_REMOVE_METADATA_FIELD,
+  METADATA_UPDATE_UPDATE_METADATA_FIELD,
+  PAUSE_PAUSE,
+} from "./utils/functionalities";
+import { setRoles } from "./program_helpers/access_control/access_control_pda_helper";
+import { ROLE_ADMIN, ROLE_CUSTOM_DATA_MANAGER } from "./utils/roles";
+
+describe("metadata-update", () => {
+  const provider = anchor.AnchorProvider.env();
+  anchor.setProvider(provider);
+  const authority = provider.wallet.payer;
+
+  describe("update_metadata_field", async () => {
+    let mint: PublicKey;
+    beforeEach(async () => {
+      ({ mint } = await deployMint());
+      await setAssetClassVersionForMint(mint, {
+        functionalities: [PAUSE_PAUSE, DEACTIVATE_DEACTIVATE, METADATA_UPDATE_UPDATE_METADATA_FIELD],
+      });
+      await setRoles(mint, authority.publicKey, [ROLE_ADMIN, ROLE_CUSTOM_DATA_MANAGER]);
+    });
+
+    // ────────────────────────────────────────────────────────────────────────────
+    it("update_metadata_field: updates all metadata fields", async () => {
+      // ── New values ─────────────────────────────────────────────────────────────
+      // Core fields are set to shorter strings → no account growth (pass null).
+      const NEW_NAME = "Updated Token";
+      const NEW_SYMBOL = "UTK";
+      const NEW_URI = "https://example.com/updated.json";
+      // Custom fields are new additions → account must grow.
+      const ISIN_KEY = "isin";
+      const ISIN_VALUE = "CH0012221716";
+      const CTRY_KEY = "country";
+      const CTRY_VALUE = "CH";
+
+      // Update core fields (shorter → no growth, pass null)
+      await updateMetadataField({ authority, mint }, { key: "name", value: NEW_NAME });
+      await updateMetadataField({ authority, mint }, { key: "symbol", value: NEW_SYMBOL });
+      await updateMetadataField({ authority, mint }, { key: "uri", value: NEW_URI });
+
+      // Add new custom fields — each grows the account by 4+key.len+4+value.len bytes
+      await updateMetadataField({ authority, mint }, { key: ISIN_KEY, value: ISIN_VALUE });
+      const { signature } = await updateMetadataField({ authority, mint }, { key: CTRY_KEY, value: CTRY_VALUE });
+
+      // ── Assertions ─────────────────────────────────────────────────────────────
+      const metadataAfter = await getTokenMetadata(mint);
+
+      assert.equal(metadataAfter?.name, NEW_NAME, "name should be updated");
+      assert.equal(metadataAfter?.symbol, NEW_SYMBOL, "symbol should be updated");
+      assert.equal(metadataAfter?.uri, NEW_URI, "uri should be updated");
+      assert.deepEqual(
+        metadataAfter?.additionalMetadata,
+        [
+          [ISIN_KEY, ISIN_VALUE],
+          [CTRY_KEY, CTRY_VALUE],
+        ],
+        "custom fields should be present with correct values"
+      );
+
+      const updatedEvent = await getMetadataFieldUpdatedEvent(signature);
+
+      assert.isNotNull(updatedEvent, "MetadataFieldUpdated event should be emitted");
+      assert.equal(updatedEvent!.mint.toBase58(), mint.toBase58(), "event mint should match the deployed mint");
+      assert.equal(
+        updatedEvent!.operator.toBase58(),
+        authority.publicKey.toBase58(),
+        "event operator should match authority"
+      );
+      assert.equal(updatedEvent!.key, CTRY_KEY, "event key should match the field that was updated");
+      assert.equal(updatedEvent!.value, CTRY_VALUE, "event value should match the new value");
+    });
+
+    // ────────────────────────────────────────────────────────────────────────────
+    it("update_metadata_field: fails with MissingRole when authority doesn't have required role", async () => {
+      await setRoles(mint, authority.publicKey, []);
+
+      try {
+        await updateMetadataField({ authority, mint });
+        assert.fail("Expected MissingRole error but instruction succeeded");
+      } catch (err) {
+        assert.instanceOf(err, AnchorError, "error should be an AnchorError");
+        const anchorErr = err as AnchorError;
+        assert.equal(anchorErr.error.errorCode.code, "MissingRole", "error code should be MissingRole");
+      }
+    });
+
+    // ────────────────────────────────────────────────────────────────────────────
+    it("update_metadata_field: fails with MissingRole when updating a core field with only ROLE_CUSTOM_DATA_MANAGER", async () => {
+      await setRoles(mint, authority.publicKey, [ROLE_CUSTOM_DATA_MANAGER]);
+
+      try {
+        await updateMetadataField({ authority, mint }, { key: "name", value: "New Name" });
+        assert.fail("Expected MissingRole error but instruction succeeded");
+      } catch (err) {
+        assert.instanceOf(err, AnchorError, "error should be an AnchorError");
+        const anchorErr = err as AnchorError;
+        assert.equal(anchorErr.error.errorCode.code, "MissingRole", "error code should be MissingRole");
+      }
+    });
+
+    // ────────────────────────────────────────────────────────────────────────────
+    it("update_metadata_field: fails with MissingRole when updating a custom field with only ROLE_ADMIN", async () => {
+      await setRoles(mint, authority.publicKey, [ROLE_ADMIN]);
+
+      try {
+        await updateMetadataField({ authority, mint }, { key: "isin", value: "CH0012221716" });
+        assert.fail("Expected MissingRole error but instruction succeeded");
+      } catch (err) {
+        assert.instanceOf(err, AnchorError, "error should be an AnchorError");
+        const anchorErr = err as AnchorError;
+        assert.equal(anchorErr.error.errorCode.code, "MissingRole", "error code should be MissingRole");
+      }
+    });
+
+    // ────────────────────────────────────────────────────────────────────────────
+    it("update_metadata_field: fails with MintPaused when mint is paused", async () => {
+      await setMintPaused(mint, true);
+
+      try {
+        await updateMetadataField({ authority, mint });
+        assert.fail("Expected MintPaused error but instruction succeeded");
+      } catch (err) {
+        assert.instanceOf(err, AnchorError, "error should be an AnchorError");
+        const anchorErr = err as AnchorError;
+        assert.equal(anchorErr.error.errorCode.code, "MintPaused", "error code should be MintPaused");
+      }
+    });
+
+    // ────────────────────────────────────────────────────────────────────────────
+    it("update_metadata_field: fails with Deactivated when mint has been deactivated", async () => {
+      await setDeactivateMarker(mint);
+
+      try {
+        await updateMetadataField({ authority, mint });
+        assert.fail("Expected Deactivated error but instruction succeeded");
+      } catch (err) {
+        assert.instanceOf(err, AnchorError, "error should be an AnchorError");
+        const anchorErr = err as AnchorError;
+        assert.equal(anchorErr.error.errorCode.code, "Deactivated", "error code should be Deactivated");
+      }
+    });
+
+    // ────────────────────────────────────────────────────────────────────────────
+    it("update_metadata_field: fails with FunctionalityNotSupportedError when the update_metadata_field functionality is not enabled", async () => {
+      // Re-seed the asset-class version WITHOUT the update_metadata_field functionality.
+      await setAssetClassVersionForMint(mint, { functionalities: [] });
+
+      try {
+        await updateMetadataField({ authority, mint });
+        assert.fail("Expected FunctionalityNotSupportedError but instruction succeeded");
+      } catch (err) {
+        assert.instanceOf(err, AnchorError, "error should be an AnchorError");
+        const anchorErr = err as AnchorError;
+        assert.equal(
+          anchorErr.error.errorCode.code,
+          "FunctionalityNotSupportedError",
+          "error code should be FunctionalityNotSupportedError"
+        );
+      }
+    });
+
+    // ────────────────────────────────────────────────────────────────────────────
+    it("update_metadata_field: fails with AssetClassVersionNotFinalized when the asset-class version is not finalized", async () => {
+      // Re-seed the asset-class version WITHOUT finalizing it.
+      await setAssetClassVersionForMint(mint, {
+        state: ASSET_CLASS_VERSION_STATE_DRAFT,
+        functionalities: [METADATA_UPDATE_UPDATE_METADATA_FIELD],
+      });
+
+      try {
+        await updateMetadataField({ authority, mint });
+        assert.fail("Expected AssetClassVersionNotFinalized error but instruction succeeded");
+      } catch (err) {
+        assert.instanceOf(err, AnchorError, "error should be an AnchorError");
+        const anchorErr = err as AnchorError;
+        assert.equal(
+          anchorErr.error.errorCode.code,
+          "AssetClassVersionNotFinalized",
+          "error code should be AssetClassVersionNotFinalized"
+        );
+      }
+    });
+  });
+
+  describe("remove_metadata_field", async () => {
+    // ────────────────────────────────────────────────────────────────────────────
+    it("remove_metadata_field: removes all custom metadata fields", async () => {
+      // Deploy the mint with custom fields already baked in — no update_metadata_field needed.
+      const ISIN_KEY = "isin";
+      const ISIN_VALUE = "CH0012221716";
+      const JURIS_KEY = "jurisdiction";
+      const JURIS_VALUE = "CH";
+      const CAT_KEY = "category";
+      const CAT_VALUE = "equity";
+
+      const { mint } = await deployMint(
+        {},
+        {
+          additionalMetadata: [
+            { key: ISIN_KEY, value: ISIN_VALUE },
+            { key: JURIS_KEY, value: JURIS_VALUE },
+            { key: CAT_KEY, value: CAT_VALUE },
+          ],
+        }
+      );
+      await setAssetClassVersionForMint(mint, { functionalities: [METADATA_UPDATE_REMOVE_METADATA_FIELD] });
+      await setRoles(mint, authority.publicKey, [ROLE_CUSTOM_DATA_MANAGER]);
+
+      // Sanity-check that all three fields landed before we remove them
+      const metadataBefore = await getTokenMetadata(mint);
+      assert.deepEqual(
+        metadataBefore?.additionalMetadata,
+        [
+          [ISIN_KEY, ISIN_VALUE],
+          [JURIS_KEY, JURIS_VALUE],
+          [CAT_KEY, CAT_VALUE],
+        ],
+        "all three custom fields should be present before removal"
+      );
+
+      // ── Remove all custom fields ───────────────────────────────────────────────
+      await removeMetadataField({ authority, mint }, { key: ISIN_KEY, idempotent: false });
+      await removeMetadataField({ authority, mint }, { key: JURIS_KEY, idempotent: false });
+      const { signature } = await removeMetadataField({ authority, mint }, { key: CAT_KEY, idempotent: false });
+
+      // ── Assertions ─────────────────────────────────────────────────────────────
+      const metadataAfter = await getTokenMetadata(mint);
+
+      // Core fields must be untouched by remove
+      assert.equal(metadataAfter?.name, "Test Token", "name should be unchanged");
+      assert.equal(metadataAfter?.symbol, "TEST_TOKEN", "symbol should be unchanged");
+      assert.equal(metadataAfter?.uri, "https://example.com/metadata.json", "uri should be unchanged");
+
+      // All custom fields must be gone
+      assert.deepEqual(metadataAfter?.additionalMetadata, [], "all custom metadata fields should be removed");
+
+      const removedEvent = await getMetadataFieldRemovedEvent(signature);
+
+      assert.isNotNull(removedEvent, "MetadataFieldRemoved event should be emitted");
+      assert.equal(removedEvent!.mint.toBase58(), mint.toBase58(), "event mint should match the deployed mint");
+      assert.equal(
+        removedEvent!.operator.toBase58(),
+        authority.publicKey.toBase58(),
+        "event operator should match authority"
+      );
+      assert.equal(removedEvent!.key, CAT_KEY, "event key should match the field that was removed");
+    });
+
+    // ────────────────────────────────────────────────────────────────────────────
+    it("remove_metadata_field: fails with MintPaused when mint is paused", async () => {
+      const ISIN_KEY = "isin";
+      const ISIN_VALUE = "CH0012221716";
+
+      // Deploy with a custom field present so there is something to remove
+      const { mint } = await deployMint({}, { additionalMetadata: [{ key: ISIN_KEY, value: ISIN_VALUE }] });
+      await setAssetClassVersionForMint(mint, {
+        functionalities: [METADATA_UPDATE_REMOVE_METADATA_FIELD],
+      });
+      await setRoles(mint, authority.publicKey, [ROLE_CUSTOM_DATA_MANAGER]);
+      await setMintPaused(mint, true);
+
+      try {
+        await removeMetadataField({ authority, mint });
+        assert.fail("Expected MintPaused error but instruction succeeded");
+      } catch (err) {
+        assert.instanceOf(err, AnchorError, "error should be an AnchorError");
+        const anchorErr = err as AnchorError;
+        assert.equal(anchorErr.error.errorCode.code, "MintPaused", "error code should be MintPaused");
+      }
+    });
+
+    // ────────────────────────────────────────────────────────────────────────────
+    it("remove_metadata_field: fails with Deactivated when mint has been deactivated", async () => {
+      // ── Deploy a fresh mint ────────────────────────────────────────────────
+      const { mint } = await deployMint();
+      await setAssetClassVersionForMint(mint, {
+        functionalities: [DEACTIVATE_DEACTIVATE, METADATA_UPDATE_REMOVE_METADATA_FIELD],
+      });
+      await setRoles(mint, authority.publicKey, [ROLE_CUSTOM_DATA_MANAGER]);
+
+      await setDeactivateMarker(mint);
+
+      try {
+        await removeMetadataField({ authority, mint });
+        assert.fail("Expected Deactivated error but instruction succeeded");
+      } catch (err) {
+        assert.instanceOf(err, AnchorError, "error should be an AnchorError");
+        const anchorErr = err as AnchorError;
+        assert.equal(anchorErr.error.errorCode.code, "Deactivated", "error code should be Deactivated");
+      }
+    });
+
+    // ────────────────────────────────────────────────────────────────────────────
+    it("remove_metadata_field: fails with MissingRole when authority doesn't have required role", async () => {
+      const ISIN_KEY = "isin";
+      const ISIN_VALUE = "CH0012221716";
+
+      // Deploy with a custom field present so there is something to remove.
+      const { mint } = await deployMint({}, { additionalMetadata: [{ key: ISIN_KEY, value: ISIN_VALUE }] });
+      await setAssetClassVersionForMint(mint, { functionalities: [METADATA_UPDATE_UPDATE_METADATA_FIELD] });
+      await setRoles(mint, authority.publicKey, []);
+
+      try {
+        await updateMetadataField({ authority, mint });
+        assert.fail("Expected MissingRole error but instruction succeeded");
+      } catch (err) {
+        assert.instanceOf(err, AnchorError, "error should be an AnchorError");
+        const anchorErr = err as AnchorError;
+        assert.equal(anchorErr.error.errorCode.code, "MissingRole", "error code should be MissingRole");
+      }
+    });
+
+    // ────────────────────────────────────────────────────────────────────────────
+    it("remove_metadata_field: fails with FunctionalityNotSupportedError when the remove_metadata_field functionality is not enabled", async () => {
+      const ISIN_KEY = "isin";
+      const ISIN_VALUE = "CH0012221716";
+
+      const { mint } = await deployMint({}, { additionalMetadata: [{ key: ISIN_KEY, value: ISIN_VALUE }] });
+
+      // Re-seed the asset-class version WITHOUT the remove_metadata_field functionality.
+      await setAssetClassVersionForMint(mint, { functionalities: [] });
+      await setRoles(mint, authority.publicKey, [ROLE_CUSTOM_DATA_MANAGER]);
+
+      try {
+        await removeMetadataField({ authority, mint });
+        assert.fail("Expected FunctionalityNotSupportedError but instruction succeeded");
+      } catch (err) {
+        assert.instanceOf(err, AnchorError, "error should be an AnchorError");
+        const anchorErr = err as AnchorError;
+        assert.equal(
+          anchorErr.error.errorCode.code,
+          "FunctionalityNotSupportedError",
+          "error code should be FunctionalityNotSupportedError"
+        );
+      }
+    });
+
+    // ────────────────────────────────────────────────────────────────────────────
+    it("remove_metadata_field: fails with AssetClassVersionNotFinalized when the asset-class version is not finalized", async () => {
+      const ISIN_KEY = "isin";
+      const ISIN_VALUE = "CH0012221716";
+
+      const { mint } = await deployMint({}, { additionalMetadata: [{ key: ISIN_KEY, value: ISIN_VALUE }] });
+
+      // Re-seed the asset-class version WITHOUT finalizing it.
+      await setAssetClassVersionForMint(mint, {
+        state: ASSET_CLASS_VERSION_STATE_DRAFT,
+        functionalities: [METADATA_UPDATE_REMOVE_METADATA_FIELD],
+      });
+      await setRoles(mint, authority.publicKey, [ROLE_CUSTOM_DATA_MANAGER]);
+
+      try {
+        await removeMetadataField({ authority, mint });
+        assert.fail("Expected AssetClassVersionNotFinalized error but instruction succeeded");
+      } catch (err) {
+        assert.instanceOf(err, AnchorError, "error should be an AnchorError");
+        const anchorErr = err as AnchorError;
+        assert.equal(
+          anchorErr.error.errorCode.code,
+          "AssetClassVersionNotFinalized",
+          "error code should be AssetClassVersionNotFinalized"
+        );
+      }
+    });
+  });
+
+  describe("update_metadata_field", async () => {
+    let mint: PublicKey;
+    beforeEach(async () => {
+      ({ mint } = await deployMint());
+      await setAssetClassVersionForMint(mint, {
+        functionalities: [PAUSE_PAUSE, METADATA_UPDATE_UPDATE_METADATA_FIELD],
+      });
+    });
+
+    // ────────────────────────────────────────────────────────────────────────────
+    it("update_metadata_field: fails with MissingRole when authority doesn't have required role", async () => {
+      await setRoles(mint, authority.publicKey, []);
+
+      try {
+        await updateMetadataField({ authority, mint });
+        assert.fail("Expected MissingRole error but instruction succeeded");
+      } catch (err) {
+        assert.instanceOf(err, AnchorError, "error should be an AnchorError");
+        const anchorErr = err as AnchorError;
+        assert.equal(anchorErr.error.errorCode.code, "MissingRole", "error code should be MissingRole");
+      }
+    });
+  });
+});

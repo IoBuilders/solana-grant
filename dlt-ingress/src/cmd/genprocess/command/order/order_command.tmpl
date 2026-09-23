@@ -1,0 +1,19 @@
+package order{{ ToLower .Name }}
+
+import (
+	"dlt-ingress/src/main/{{ ToLower .BoundedContext }}/domain/process/{{ ToLower .Name }}"
+
+	"github.com/google/uuid"
+)
+
+type Command struct {
+	ProcessId        uuid.UUID
+	DltAccountId          string
+	SignerDltAccountId string
+	SignerPrivateKey string
+	//TODO: AUTOGENERATE: complete command fields and remove this comment
+}
+
+type Response struct {
+	{{ ToLower .Name }}process.OrderedEvent
+}

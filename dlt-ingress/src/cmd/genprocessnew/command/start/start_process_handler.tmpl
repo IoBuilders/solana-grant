@@ -1,0 +1,47 @@
+package start{{ ToLower .Name }}
+
+import (
+	"context"
+	"dlt-ingress/src/main/{{ ToLower .BoundedContext }}/internal/domain/process/{{ ToLower .Name }}"
+
+	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/event"
+)
+
+type CommandHandler struct {
+	eventBus    event.Bus
+	processRepo {{ ToLower .Name }}process.Repository
+}
+
+func NewCommandHandler(processRepo {{ ToLower .Name }}process.Repository, eventBus event.Bus) *CommandHandler {
+	return &CommandHandler{processRepo: processRepo, eventBus: eventBus}
+}
+
+func (h *CommandHandler) Handle(ctx context.Context, cmd *Command) (*Response, error) {
+	newProcess := &{{ ToLower .Name }}process.{{ .Name }}Process{}
+	/*newProcess := {{ ToLower .Name }}process.New(func(process *{{ ToLower .Name }}process.{{ .Name }}Process) {
+		processId := uuid.New()
+		process.Process.Id = processId
+		process.ProcessId = processId
+		//TODO: AUTOGENERATE: Add entity fields and remove me
+		if cmd.CallbackUrl != "" {
+			process.Process.Callback = *callback.New(func(cb *callback.Callback) {
+				cb.ProcessId = processId
+				cb.Url = cmd.CallbackUrl
+			})
+		}
+	})*/
+	err := h.processRepo.Create(ctx, newProcess)
+	if err != nil {
+		return nil, err
+	}
+	evt := {{ ToLower .Name }}process.StartedEvent{
+		ProcessId: newProcess.Id,
+		//TODO: AUTOGENERATE: Add event fields and remove me
+		BaseEvent: *event.NewBaseEvent(),
+	}
+	if evtErr := h.eventBus.Publish(ctx, evt); evtErr != nil {
+		return nil, evtErr
+	}
+
+	return &Response{evt}, nil
+}

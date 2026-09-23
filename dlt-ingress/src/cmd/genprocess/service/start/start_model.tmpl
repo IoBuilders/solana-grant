@@ -1,0 +1,17 @@
+package start{{ ToLower .Name }}
+
+import (
+	"github.com/google/uuid"
+)
+
+type Model struct {
+	Email       string
+	CallbackUrl string
+	// TODO: AUTOGENERATE: Add additional model fields as needed
+}
+
+type Response struct {
+	ProcessId uuid.UUID
+	Status    string
+	Type      string
+}

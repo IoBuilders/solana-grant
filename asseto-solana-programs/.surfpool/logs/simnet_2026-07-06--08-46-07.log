@@ -1,0 +1,4 @@
+[2026-07-06--08-47-11 ERROR surfpool::cli::simnet] Transaction simulation failed: Error processing Instruction 0: custom program error: 0x43
+[2026-07-06--08-47-12 ERROR surfpool::cli::simnet] Transaction simulation failed: Error processing Instruction 0: custom program error: 0x1772
+[2026-07-06--08-47-13 ERROR surfpool::cli::simnet] Transaction simulation failed: Error processing Instruction 0: custom program error: 0x1770
+[2026-07-06--08-47-14 ERROR surfpool::cli::simnet] Transaction simulation failed: Error processing Instruction 0: custom program error: 0x1770

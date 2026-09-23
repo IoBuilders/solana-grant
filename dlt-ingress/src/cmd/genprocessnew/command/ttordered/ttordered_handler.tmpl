@@ -1,0 +1,52 @@
+package ttordered{{ ToLower .Name }}
+
+import (
+	"context"
+	"dlt-ingress/src/main/{{ ToLower .BoundedContext }}/internal/domain/process/{{ ToLower .Name }}"
+	"dlt-ingress/src/main/{{ ToLower .BoundedContext }}/internal/domain/process/{{ ToLower .Name }}/service"
+
+	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/domain/base"
+	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/event"
+)
+
+type CommandHandler struct {
+	eventBus                           event.Bus
+	processRepo                        {{ ToLower .Name }}process.Repository
+	{{ ToLower .Action }}{{ .Entity }}ProcessStatusCheck service{{ ToLower .Name }}process.StatusCheckInterface
+}
+
+func NewCommandHandler(
+	processRepo {{ ToLower .Name }}process.Repository,
+	eventBus event.Bus,
+	{{ ToLower .Action }}{{ .Entity }}ProcessStatusCheck service{{ ToLower .Name }}process.StatusCheckInterface,
+) *CommandHandler {
+	return &CommandHandler{
+		processRepo:                        processRepo,
+		eventBus:                           eventBus,
+		{{ ToLower .Action }}{{ .Entity }}ProcessStatusCheck: {{ ToLower .Action }}{{ .Entity }}ProcessStatusCheck,
+	}
+}
+
+func (h *CommandHandler) Handle(ctx context.Context, cmd *Command) (*Response, error) {
+	//TODO: AUTOGENERATE: Implement handler and remove this comment
+	{{ ToLower .Action }}{{ .Entity }}Process, err := h.{{ ToLower .Action }}{{ .Entity }}ProcessStatusCheck.Execute(ctx, cmd.ProcessId, base.Started)
+	if err != nil {
+		return nil, err
+	}
+	{{ ToLower .Action }}{{ .Entity }}Process.Process.Status = base.Ordered
+	{{ ToLower .Action }}{{ .Entity }}Process.Process.TransactionHash = cmd.TransactionHash
+	repoErr := h.processRepo.Save(ctx, {{ ToLower .Action }}{{ .Entity }}Process)
+	if repoErr != nil {
+		return nil, repoErr
+	}
+
+	evt := {{ ToLower .Name }}process.TransitToOrderedEvent{
+		ProcessId: {{ ToLower .Action }}{{ .Entity }}Process.Id,
+		BaseEvent: *event.NewBaseEvent(),
+	}
+	if evtErr := h.eventBus.Publish(ctx, evt); evtErr != nil {
+		return nil, evtErr
+	}
+	panic("implement me")
+	//return &Response{evt}, nil
+}

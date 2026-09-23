@@ -1,0 +1,41 @@
+package {{ ToLower .Entity }}repo
+
+import (
+	"dlt-ingress/src/main/{{ ToLower .BoundedContext }}/internal/domain/{{ ToLower .ExtraPath }}{{ .FolderName }}"
+	"dlt-ingress/src/main/core/utils"
+
+	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/domain/base"
+	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/port/repository/base"
+)
+
+func ToDomain(model {{ .Entity }}) {{ ToLower .Entity }}.{{ .Entity }} {
+	return {{ ToLower .Entity }}.{{ .Entity }}{
+		Entity: base.Entity{
+			Id:        model.Id,
+			CreatedAt: model.CreatedAt,
+			UpdatedAt: model.UpdatedAt,
+		},
+		Name: model.Name,
+		//TODO: AUTOGENERATE: Map fields and remove me
+	}
+}
+
+func FromDomain(entity {{ ToLower .Entity }}.{{ .Entity }}) {{ .Entity }} {
+	return {{ .Entity }}{
+		Model: baserepo.Model{
+			Id:        entity.Id,
+			CreatedAt: entity.CreatedAt,
+			UpdatedAt: entity.UpdatedAt,
+		},
+		Name: entity.Name,
+		//TODO: AUTOGENERATE: Map fields and remove me
+	}
+}
+
+func ToDomainList(models []{{ .Entity }}) []{{ ToLower .Entity }}.{{ .Entity }} {
+	return utils.MapSlice(models, ToDomain)
+}
+
+func FromDomainList(entities []{{ ToLower .Entity }}.{{ .Entity }}) []{{ .Entity }} {
+	return utils.MapSlice(entities, FromDomain)
+}

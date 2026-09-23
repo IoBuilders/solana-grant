@@ -1,0 +1,51 @@
+package {{ ToLower .Name }}
+
+import (
+	"context"
+	"dlt-ingress/src/main/{{ ToLower .BoundedContext }}/domain/{{ .ExtraPath }}{{ ToLower .Entity }}"
+	{{- if not .IsErrorRefactor}}
+	"dlt-ingress/src/main/{{ ToLower .BoundedContext }}/domain/domainerrors"
+	{{- end}}
+
+	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/event"
+)
+
+type CommandHandler struct {
+	eventBus event.Bus
+	//TODO: AUTOGENERATE: Replace command params by needed and remove this comment
+	//{{ ToLower .Action }}{{ .Entity }}ProcessExists service{{ ToLower .Name }}process.ExistsInterface
+	//{{ ToLowerFirst .Entity }}ExistsService       service{{ ToLower .Entity }}.ExistsInterface
+	//{{ ToLowerFirst .Entity }}Repo                {{ ToLower .Entity }}repo.Repository
+}
+
+func NewCommandHandler(eventBus event.Bus) *CommandHandler {
+	return &CommandHandler{eventBus: eventBus}
+}
+
+func (h *CommandHandler) Handle(ctx context.Context, cmd *Command) (*Response, {{if .IsErrorRefactor}}error{{else}}*domainerrors.{{ .BoundedContext }}Error{{end}}) {
+	//TODO: AUTOGENERATE: Implement handler and remove this comment
+	//process, err := h.{{ ToLower .Action }}{{ .Entity }}ProcessExists.Execute(ctx, cmd.ProcessId)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//{{ ToLowerFirst .Entity }}Entity, err := h.{{ ToLowerFirst .Entity }}ExistsService.Execute(process.{{ .Entity }}Id)
+	//if err != nil {
+	//	return nil, err
+	//}
+
+	//repoError := h.{{ ToLowerFirst .Entity }}Repo.Save(ctx, {{ ToLowerFirst .Entity }}Entity)
+	//if repoError != nil {
+	//	return nil, repoError.(*domainerrors.{{ .BoundedContext }}Error)
+	//}
+
+	evt := {{ ToLower .Entity }}.{{ ToDone .Action }}Event{
+		BaseEvent: *event.NewBaseEvent(),
+		//		{{ .Entity }}Id:   {{ ToLowerFirst .Entity }}Entity.Id,
+		ProcessId: cmd.ProcessId,
+	}
+	if evtErr := h.eventBus.Publish(ctx, evt); evtErr != nil {
+		return nil, {{if .IsErrorRefactor}}evtErr{{else}}domainerrors.NewPublishError(evtErr, evt){{end}}
+	}
+	panic("implement me")
+	//return &Response{evt}, nil
+}

@@ -1,0 +1,25 @@
+services:
+  db:
+    image: postgres:${POSTGRES_VERSION:-14.7}
+    container_name: postgres-dev
+    environment:
+      POSTGRES_USER: dltingress
+      POSTGRES_PASSWORD: dltingress
+      POSTGRES_DB: dltingress
+    ports:
+      - "${POSTGRES_PORT:-5434}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+  ministack:
+    image: ministackorg/ministack:${MINISTACK_VERSION:-1.4.16}
+    container_name: ministack-dev
+    environment:
+      - LOG_LEVEL=INFO
+      - REDIS_HOST=redis
+    ports:
+      - "${MINISTACK_PORT:-4566}:4566"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+volumes:
+  postgres_data:

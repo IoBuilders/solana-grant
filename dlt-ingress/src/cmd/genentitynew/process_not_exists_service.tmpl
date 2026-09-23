@@ -1,0 +1,36 @@
+package service{{ ToLower .Entity }}
+
+import (
+	"context"
+
+	"github.com/google/uuid"
+
+	"dlt-ingress/src/main/{{ ToLower .BoundedContext }}/internal/domain/{{ ToLower .ExtraPath }}{{ .FolderName }}"
+)
+
+type NotExists struct {
+	repo {{ ToLower .Entity }}.Repository
+}
+
+type NotExistsInterface interface {
+	// TODO: AUTOGENERATE: rename/adjust to your aggregate, e.g.
+	// ExecuteByAssetIdAndNotFailedOrFinished(ctx, assetId uuid.UUID) error
+	Execute(ctx context.Context, id uuid.UUID) error
+}
+
+func NewNotExists(repo {{ ToLower .Entity }}.Repository) *NotExists {
+	return &NotExists{repo: repo}
+}
+
+func (p *NotExists) Execute(ctx context.Context, id uuid.UUID) error {
+	// TODO: AUTOGENERATE: replace this lookup. Add a finder to the Repository
+	// interface that returns active processes for your parent entity, and return
+	// domainerrors.NewPendingProcessDomainError("{{ .Entity }}") if any exist.
+	_, err := p.repo.FindByIdPreload(ctx, id)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+var _ NotExistsInterface = (*NotExists)(nil)

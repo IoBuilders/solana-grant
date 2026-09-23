@@ -1,0 +1,8 @@
+{
+  "Exclude": [
+    "\\.claude/",
+    "\\.gemini/",
+    "_bmad/",
+    "\\.go$"
+  ]
+}

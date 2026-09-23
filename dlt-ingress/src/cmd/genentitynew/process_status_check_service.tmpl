@@ -1,0 +1,37 @@
+package service{{ ToLower .Entity }}
+
+import (
+	"context"
+
+	coredomainerrors "gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/domain/domainerrors"
+
+	"github.com/google/uuid"
+	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/domain/base"
+
+	"dlt-ingress/src/main/{{ ToLower .BoundedContext }}/internal/domain/{{ ToLower .ExtraPath }}{{ .FolderName }}"
+)
+
+type StatusCheck struct {
+	repo {{ ToLower .Entity }}.Repository
+}
+
+type StatusCheckInterface interface {
+	Execute(ctx context.Context, processId uuid.UUID, expected base.ProcessStatus) (*{{ ToLower .Entity }}.{{ .Entity }}, error)
+}
+
+func NewStatusCheck(repo {{ ToLower .Entity }}.Repository) *StatusCheck {
+	return &StatusCheck{repo: repo}
+}
+
+func (p *StatusCheck) Execute(ctx context.Context, processId uuid.UUID, expected base.ProcessStatus) (*{{ ToLower .Entity }}.{{ .Entity }}, error) {
+	processEntity, err := p.repo.FindByIdPreload(ctx, processId)
+	if err != nil {
+		return nil, err
+	}
+	if processEntity.Process.Status != expected {
+		return nil, coredomainerrors.NewEntityUnexpectedStatusDomainError("{{ .Entity }}", processId, string(processEntity.Process.Status), string(expected))
+	}
+	return processEntity, nil
+}
+
+var _ StatusCheckInterface = (*StatusCheck)(nil)

@@ -1,0 +1,40 @@
+package {{ ToLower .DLTEventName }}converter
+
+import (
+	"context"
+	"dlt-ingress/src/main/core/blockchain/client"
+	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/event"
+	"dlt-ingress/src/main/{{ ToLower .BoundedContext }}/domain/{{ .ExtraPath }}{{ ToLower .Entity }}"
+	{{- if not .IsErrorRefactor}}
+	"dlt-ingress/src/main/{{ ToLower .BoundedContext }}/domain/domainerrors"
+	{{- end}}
+)
+
+type CommandHandler struct {
+	eventBus          event.Bus
+	blockchainClient clientblockchain.Service
+}
+
+func NewCommandHandler(
+	eventBus event.Bus,
+	blockchainClient clientblockchain.Service,
+) *CommandHandler {
+	return &CommandHandler{
+		eventBus:          eventBus,
+		blockchainClient: blockchainClient,
+	}
+}
+
+func (h *CommandHandler) Handle(ctx context.Context, cmd *Command) (*Response, {{if .IsErrorRefactor}}error{{else}}*domainerrors.{{ .BoundedContext }}Error{{end}}) {
+	//TODO: AUTOGENERATE: Implement handler using Parse and remove this comment
+
+	evt := {{ ToLower .Entity }}.{{ .DLTEventName }}DLTEvent{
+		BaseDltEvent: cmd.ToBaseDltEvent(),
+		//TODO: AUTOGENERATE: Add event specific params and remove this comment
+	}
+	if evtErr := h.eventBus.Publish(ctx, evt); evtErr != nil {
+		return nil, {{if .IsErrorRefactor}}evtErr{{else}}domainerrors.NewPublishError(evtErr, evt){{end}}
+	}
+	panic("implement me")
+	//return &Response{evt}, nil
+}

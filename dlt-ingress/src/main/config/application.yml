@@ -1,0 +1,158 @@
+application:
+  name: ${ASSETO_APP_NAME:"DLT Ingress"}
+
+logging:
+  level: ${ASSETO_LOGGING_LEVEL:INFO}
+  format: ${ASSETO_LOGGING_FORMAT:text} # text|json
+
+server:
+  port: ${ASSETO_SERVER_PORT:8080}
+  hostname: ${ASSETO_HOSTNAME:localhost}
+  callbackInterval: ${ASSETO_CALLBACK_INTERVAL:3s}
+  callbackMaxAttempts: ${ASSETO_CALLBACK_ATTEMPTS:10}
+  defaultRequestTimeout: ${ASSETO_SERVER_DEFAULT_REQUEST_TIMEOUT:60s}
+  readHeaderTimeout: ${ASSETO_SERVER_READ_HEADER_TIMEOUT:5s}
+  readTimeout: ${ASSETO_SERVER_READ_TIMEOUT:60s}
+  writeTimeout: ${ASSETO_SERVER_WRITE_TIMEOUT:65s}
+  idleTimeout: ${ASSETO_SERVER_IDLE_TIMEOUT:90s}
+  allowedOrigins:
+    - http://localhost
+    - http://frontend.demo.o2d.io.builders
+    - ${ASSETO_FRONTEND_URL:http://frontend.demo.o2d.io.builders}
+  health:
+    check:
+      path: ${ASSETO_HEALTH_CHECK_PATH:/health/check}
+    status:
+      path: ${ASSETO_HEALTH_STATUS_PATH:/health/status}
+
+database:
+  dltingress:
+    url: postgres://${ASSETO_DLTINGRESS_DB_USER:dltingress}:${ASSETO_DLTINGRESS_DB_PASSWORD:dltingress}@${ASSETO_DB_HOST:localhost}:${ASSETO_DB_PORT:5434}/${ASSETO_DLTINGRESS_DB_DBNAME:dltingress}?sslmode=disable
+    maxOpenConnections: ${ASSETO_DLTINGRESS_DB_MAX_OPEN_CONNECTIONS:10}
+    maxIdleConnections: ${ASSETO_DLTINGRESS_DB_MAX_IDLE_CONNECTIONS:3}
+    connMaxLifetime: ${ASSETO_DLTINGRESS_DB_CONN_MAX_LIFETIME:10m}
+    connMaxIdleTime: ${ASSETO_DLTINGRESS_DB_CONN_MAX_IDLE_TIME:2m}
+    connectionTimeout: ${ASSETO_DLTINGRESS_DB_CONNECTION_TIMEOUT:30s}
+    statementTimeout: ${ASSETO_DLTINGRESS_DB_STATEMENT_TIMEOUT:30s}
+    idleInTransactionSessionTimeout: ${ASSETO_DLTINGRESS_DB_IDLE_IN_TRANSACTION_SESSION_TIMEOUT:60s}
+    lockTimeout: ${ASSETO_DLTINGRESS_DB_LOCK_TIMEOUT:30s}
+
+dltingress:
+  networks:
+    - id: ${ASSETO_DEFAULT_NETWORK_ID:solana-localnet}
+      url: ${ASSETO_DEFAULT_NETWORK_URL:http://127.0.0.1:8899}
+      dlt: ${ASSETO_DEFAULT_NETWORK_DLT:SVM}
+      chainId: ${ASSETO_DEFAULT_NETWORK_CHAIN_ID:44844}
+      transactionType: ${ASSETO_DEFAULT_NETWORK_TRANSACTION_TYPE:0}
+      gasLimit: ${ASSETO_DEFAULT_NETWORK_GAS_LIMIT:300_000_000}
+      gasPrice: ${ASSETO_DEFAULT_NETWORK_GAS_PRICE:0}
+      gasLimitMultiplier: ${ASSETO_BLOCKCHAIN_GAS_LIMIT_MULTIPLIER:1.2}
+      feeMultiplier: ${ASSETO_DEFAULT_NETWORK_FEE_MULTIPLIER:1.2}
+      maxPriorityFeePerGas: ${ASSETO_DEFAULT_NETWORK_MAX_PRIORITY_FEE_PER_GAS:0}
+      maxTxPoolSize: ${ASSETO_DEFAULT_MAX_TX_POOL_SIZE:1000}
+      maxCuPrice: ${ASSETO_DEFAULT_NETWORK_MAX_CU_PRICE:1000000}
+  custody:
+    provider: ${ASSETO_CUSTODY_PROVIDER:KMS}
+    dfns:
+      baseUrl: ${ASSETO_DFNS_BASE_URL:"https://api.dfns.io"}
+      authToken: ${ASSETO_DFNS_AUTH_TOKEN:}
+      credentialId: ${ASSETO_DFNS_CREDENTIAL_ID:}
+      privateKey: ${ASSETO_DFNS_PRIVATE_KEY:}
+    kms:
+      region: ${ASSETO_KMS_REGION:us-east-1}
+      accessKey: ${ASSETO_KMS_ACCESS_KEY:} # test
+      secretKey: ${ASSETO_KMS_SECRET_KEY:} # test
+      endpoint: ${ASSETO_KMS_ENDPOINT:http://localhost:4566}
+      tags: ${ASSETO_KMS_TAGS:[]}
+      aliasPrefix: ${ASSETO_KMS_ALIAS_PREFIX:alias/asseto/custody}
+  txBoundedBlockingQueue:
+    expirationTime: ${ASSETO_TX_QUEUE_EXPIRATION_TIME:1h}
+    expiredCleanInterval: ${ASSETO_TX_EXPIRED_CLEAN_INTERVAL:1.5h}
+    retry:
+      maxAttempts: ${ASSETO_TX_QUEUE_RETRY_MAX_ATTEMPTS:5}
+      delay: ${ASSETO_TX_QUEUE_RETRY_DELAY:1s}
+      maxDelay: ${ASSETO_TX_QUEUE_RETRY_MAX_DELAY:30s}
+      multiplier: ${ASSETO_TX_QUEUE_RETRY_MULTIPLIER:2.0}
+  # Retry policy shared by every listener registered via ListenerRegistrar.RegisterLockTimeoutRetryable
+  # (any listener whose DB write can hit a lock timeout, not just order/DLT-nonce listeners).
+  lockTimeoutRetryableListeners:
+    retry:
+      maxAttempts: ${ASSETO_LOCK_TIMEOUT_RETRYABLE_LISTENERS_RETRY_MAX_ATTEMPTS:5}
+      delay: ${ASSETO_LOCK_TIMEOUT_RETRYABLE_LISTENERS_RETRY_DELAY:15s}
+      maxDelay: ${ASSETO_LOCK_TIMEOUT_RETRYABLE_LISTENERS_RETRY_MAX_DELAY:10m}
+      multiplier: ${ASSETO_LOCK_TIMEOUT_RETRYABLE_LISTENERS_RETRY_MULTIPLIER:2.0}
+
+auth:
+  jwt:
+    sources:
+      - issuer: ${ASSET_AUTH_JWT_DEFAULT_SOURCE_ISSUER:}
+        uri: ${ASSET_AUTH_JWT_DEFAULT_SOURCE_URI:}
+        publicKey: ${ASSET_AUTH_JWT_DEFAULT_SOURCE_PUBLIC_KEY:}
+      - issuer: ${ASSET_AUTH_JWT_PORTAL_SOURCE_ISSUER:asseto-portal}
+        uri: ${ASSET_AUTH_JWT_PORTAL_SOURCE_URI:}
+        publicKey: ${ASSET_AUTH_JWT_PORTAL_SOURCE_PUBLIC_KEY:-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAhOEquubb+8M1YLQZu9j+XexVFOKKB9qJvzvvN3v99DY=\n-----END PUBLIC KEY-----}
+
+retryableListeners:
+  default:
+    maxAttempts: ${ASSETO_RETRYABLE_MAX_ATTEMPTS:3}
+    delay: ${ASSETO_RETRYABLE_DELAY:1s}
+    maxDelay: ${ASSETO_RETRYABLE_MAX_DELAY:30s}
+    multiplier: ${ASSETO_RETRYABLE_MULTIPLIER:2.0}
+
+listenerConfig:
+  defaults:
+    concurrency: ${ASSETO_LISTENER_CONCURRENCY:50}
+    executionTimeout: ${ASSETO_LISTENER_EXECUTION_TIMEOUT:120s}
+    # Overrides applied to every listener registered via RegisterLockTimeoutRetryable (any listener
+    # whose DB write can hit a lock timeout, not just order/DLT-nonce listeners) across all bounded
+    # contexts, so each one doesn't need to be listed individually under its bounded context's
+    # `listeners` map.
+    lockTimeoutRetryable:
+      concurrency: ${ASSETO_LOCK_TIMEOUT_RETRYABLE_LISTENER_CONCURRENCY:5}
+      executionTimeout: ${ASSETO_LOCK_TIMEOUT_RETRYABLE_LISTENER_EXECUTION_TIMEOUT:120s}
+
+janitor:
+  default:
+    threshold: ${ASSETO_JANITOR_THRESHOLD:180s}
+    interval: ${ASSETO_JANITOR_INTERVAL:30s}
+
+eventStore:
+  default:
+    interval: ${ASSETO_EVENT_STORE_INTERVAL:100ms}
+    batchSize: ${ASSETO_EVENT_STORE_BATCH_SIZE:100}
+    semaphoreWaitTimeout: ${ASSETO_SEMAPHORE_WAIT_TIMEOUT:30s}
+
+otel:
+  service:
+    name: ${OTEL_SERVICE_NAME}
+  resource:
+    attributes: ${OTEL_RESOURCE_ATTRIBUTES}
+  global:
+    endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT}
+    protocol: ${OTEL_EXPORTER_OTLP_PROTOCOL}
+    headers: ${OTEL_EXPORTER_OTLP_HEADERS}
+    insecure: ${OTEL_EXPORTER_OTLP_INSECURE}
+  logs:
+    exporter: ${OTEL_LOGS_EXPORTER:none}
+    endpoint: ${OTEL_EXPORTER_OTLP_LOGS_ENDPOINT}
+    protocol: ${OTEL_EXPORTER_OTLP_LOGS_PROTOCOL}
+    headers: ${OTEL_EXPORTER_OTLP_LOGS_HEADERS}
+    insecure: ${OTEL_EXPORTER_OTLP_LOGS_INSECURE}
+  traces:
+    exporter: ${OTEL_TRACES_EXPORTER:none}
+    endpoint: ${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT}
+    protocol: ${OTEL_EXPORTER_OTLP_TRACES_PROTOCOL}
+    headers: ${OTEL_EXPORTER_OTLP_TRACES_HEADERS}
+    insecure: ${OTEL_EXPORTER_OTLP_TRACES_INSECURE}
+  metrics:
+    exporter: ${OTEL_METRICS_EXPORTER:none}
+    endpoint: ${OTEL_EXPORTER_OTLP_METRICS_ENDPOINT}
+    protocol: ${OTEL_EXPORTER_OTLP_METRICS_PROTOCOL}
+    headers: ${OTEL_EXPORTER_OTLP_METRICS_HEADERS}
+    insecure: ${OTEL_EXPORTER_OTLP_METRICS_INSECURE}
+    interval: ${OTEL_METRIC_EXPORT_INTERVAL}
+    prometheusHost: ${OTEL_EXPORTER_PROMETHEUS_HOST} # An endpoint /metrics is created in host:port when metrics exporter(OTEL_METRICS_EXPORTER) is prometheus
+    prometheusPort: ${OTEL_EXPORTER_PROMETHEUS_PORT}
+
+cache:
+  caches:

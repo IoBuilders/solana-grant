@@ -1,0 +1,39 @@
+package {{ ToLower .Entity }}
+
+import (
+	"dlt-ingress/src/main/{{ ToLower .BoundedContext }}/internal/domain/process"
+
+	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/domain/base"
+)
+
+type {{ .Entity }} struct {
+	base.Process
+	Name string
+	//TODO: AUTOGENERATE: Add fields and remove me
+}
+
+type Configurator = func(ac *{{ .Entity }})
+
+func New{{ .Entity }}(name string, configs ...Configurator) (*{{ .Entity }}, error) {
+	newBase := base.NewProcess()
+	newBase.Type = base.Type({{ ToLower .BoundedContext }}process.{{ .TypeName }})
+
+	{{ ToLowerFirst .Entity }} := &{{ .Entity }}{
+		Process: newBase,
+		Name:    name,
+	}
+
+	for _, config := range configs {
+		config({{ ToLowerFirst .Entity }})
+	}
+
+	if err := validate({{ ToLowerFirst .Entity }}); err != nil {
+		return nil, err
+	}
+
+	return {{ ToLowerFirst .Entity }}, nil
+}
+
+func validate(e *{{ .Entity }}) error {
+	return nil
+}

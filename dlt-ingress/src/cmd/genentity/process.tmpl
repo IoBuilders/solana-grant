@@ -1,0 +1,28 @@
+package {{ ToLower .Action }}{{ ToLower .Entity }}process
+
+import (
+"dlt-ingress/src/main/{{ ToLower .BoundedContext }}/domain/process"
+
+"github.com/google/uuid"
+"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/domain/baseprocess"
+)
+
+type {{ .Action }}{{ .Entity }}Process struct {
+	ProcessId   uuid.UUID
+	Name        string
+	BaseProcess baseprocess.BaseProcess
+}
+
+type {{ .Action }}{{ .Entity }}ProcessConfigurator = func({{ .Action }}{{ .Entity }}Process *{{ .Action }}{{ .Entity }}Process)
+
+func New(config {{ .Action }}{{ .Entity }}ProcessConfigurator) *{{ .Action }}{{ .Entity }}Process {
+	proc := &{{ .Action }}{{ .Entity }}Process{
+		BaseProcess: baseprocess.BaseProcess{
+			Status:   baseprocess.Started,
+			Type:     baseprocess.Type({{ ToLower .BoundedContext }}process.{{ .Action }}{{ .Entity }}),
+			EntityId: uuid.New(),
+		},
+	}
+	config(proc)
+	return proc
+}

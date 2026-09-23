@@ -1,0 +1,205 @@
+naryo:
+  httpClient:
+    maxIdleConnections: 10
+    keepAliveDuration: 30s
+    connectTimeout: 5s
+    readTimeout: 10s
+    writeTimeout: 10s
+    callTimeout: 15s
+    pingInterval: 20s
+    retryOnConnectionFailure: false
+
+  nodes:
+    - id: "00000000-0000-0000-0000-000000000001"
+      name: "solana-node"
+      type: "SOLANA"
+      connection:
+        type: "HTTP"
+        endpoint:
+          url: "${SOLANA_NODE_URL:http://localhost:8899}"
+        retry:
+          maxRetries: 5
+          initialDelay: 1s
+          maxDelay: 30s
+          multiplier: 2.0
+      subscription:
+        method: "POLL"
+        initialSlot: 0
+        interval: 1s
+
+  # Optional. Per-program Anchor Custom(u32) error code -> name tables, used
+  # as a decode-time fallback when a failed transaction's own log line is
+  # missing or truncated -- never required for decoding to proceed.
+  #
+  # Manual test entry: code 0 here isn't one of the deploy program's own
+  # declared Anchor errors (see programs/deploy/src/errors.rs -- it only
+  # declares MintAuthorityMustBeSigner=6000 and InvalidMintAccountSize=6001).
+  # It maps the *System Program's* AccountAlreadyInUse code, which surfaces
+  # as Custom(0) attributed to the deploy program because DecodedError looks
+  # up the registry by the top-level instruction's program ID (the one
+  # Anchor-invoked), not the CPI target that actually threw. A duplicate
+  # deploy_mint call for an already-allocated mint reproduces this exact
+  # code with no Anchor log line, so it's a real decode-time fallback case.
+  programErrors:
+    - programId: "HCe5Um7ThFBzDSyn256EPQvyr6jy6E66ydzZ5hMta3Tq"
+      codes:
+        - name: "AccountAlreadyInUse"
+          code: 0
+
+  filters:
+    - id: "815e1253-74e7-4e08-8e5f-65761739542b"
+      type: "EVENT"
+      name: "event-filter"
+      nodeId: "00000000-0000-0000-0000-000000000001"
+      scope: "CONTRACT"
+      contractAddress: "HCe5Um7ThFBzDSyn256EPQvyr6jy6E66ydzZ5hMta3Tq"
+      specification:
+        strategy: "ANCHOR"
+        source: "EMIT_CPI"
+        signature: "MintDeployed(address,address,uint8,string,string,string,option<string>,uint64,uint64)"
+      statuses:
+        - "CONFIRMED"
+    - id: "5f90ed1a-1a8a-41dd-b53f-635c607d8104"
+      type: "EVENT"
+      name: "event-filter"
+      nodeId: "00000000-0000-0000-0000-000000000001"
+      scope: "CONTRACT"
+      contractAddress: "FEY9E77nH7R1gLGNxkhYKchJpB6MgpMrWMhkNXrNhzR5"
+      specification:
+        strategy: "ANCHOR"
+        source: "EMIT_CPI"
+        signature: "FactoryInitialized(address)"
+      statuses:
+        - "CONFIRMED"
+    - id: "1d7ab021-1d49-4012-93bc-e4a4874b534a"
+      type: "EVENT"
+      name: "event-filter"
+      nodeId: "00000000-0000-0000-0000-000000000001"
+      scope: "CONTRACT"
+      contractAddress: "FEY9E77nH7R1gLGNxkhYKchJpB6MgpMrWMhkNXrNhzR5"
+      specification:
+        strategy: "ANCHOR"
+        source: "EMIT_CPI"
+        signature: "AssetClassCreated(uint64,address,address)"
+      statuses:
+        - "CONFIRMED"
+    - id: "dc46d207-49b4-4090-a913-91ae4ae64357"
+      type: "EVENT"
+      name: "event-filter"
+      nodeId: "00000000-0000-0000-0000-000000000001"
+      scope: "CONTRACT"
+      contractAddress: "FEY9E77nH7R1gLGNxkhYKchJpB6MgpMrWMhkNXrNhzR5"
+      specification:
+        strategy: "ANCHOR"
+        source: "EMIT_CPI"
+        signature: "AssetClassVersionInitialized(uint64,uint64,address)"
+      statuses:
+        - "CONFIRMED"
+    - id: "28feabcf-ad30-4eba-84cc-d47ed2d79268"
+      type: "EVENT"
+      name: "event-filter"
+      nodeId: "00000000-0000-0000-0000-000000000001"
+      scope: "CONTRACT"
+      contractAddress: "FEY9E77nH7R1gLGNxkhYKchJpB6MgpMrWMhkNXrNhzR5"
+      specification:
+        strategy: "ANCHOR"
+        source: "EMIT_CPI"
+        signature: "AssetClassVersionFunctionalitiesEnabled(uint64,uint64,uint16[],address)"
+      statuses:
+        - "CONFIRMED"
+    - id: "e2746809-361f-4e7b-867b-209cb93c727c"
+      type: "EVENT"
+      name: "event-filter"
+      nodeId: "00000000-0000-0000-0000-000000000001"
+      scope: "CONTRACT"
+      contractAddress: "FEY9E77nH7R1gLGNxkhYKchJpB6MgpMrWMhkNXrNhzR5"
+      specification:
+        strategy: "ANCHOR"
+        source: "EMIT_CPI"
+        signature: "AssetClassVersionFinalized(uint64,uint64,address)"
+      statuses:
+        - "CONFIRMED"
+    - id: "d490f2a6-666e-4aaa-8183-a5d5b1da4efd"
+      type: "EVENT"
+      name: "event-filter"
+      nodeId: "00000000-0000-0000-0000-000000000001"
+      scope: "CONTRACT"
+      contractAddress: "BgVv7zYbf3L4ECwaeNoNqD6unKWvQtgTwRJ2Dma7iSHQ"
+      specification:
+        strategy: "ANCHOR"
+        source: "EMIT_CPI"
+        signature: "Issued(address,address,address,uint64)"
+      statuses:
+        - "CONFIRMED"
+
+    # Manual test filter: catches any failed transaction touching the deploy
+    # program (e.g. a second deploy_mint call for a mint that's already
+    # deployed), so DecodedError's revert-reason decoding shows up on the
+    # /transactions broadcast below.
+    - id: "bf8f5397-9bf6-47e7-b86a-c27fcfe49a10"
+      type: "TRANSACTION"
+      name: "failed-transaction-filter"
+      nodeId: "00000000-0000-0000-0000-000000000001"
+      identifierType: "ADDRESSES"
+      value:
+        - "HCe5Um7ThFBzDSyn256EPQvyr6jy6E66ydzZ5hMta3Tq"
+      statuses:
+        - "FAILED"
+    - id: "960d0505-b953-4f1e-b3cf-9c23b7690484"
+      type: "TRANSACTION"
+      name: "failed-transaction-filter"
+      nodeId: "00000000-0000-0000-0000-000000000001"
+      identifierType: "ADDRESSES"
+      value:
+        - "FEY9E77nH7R1gLGNxkhYKchJpB6MgpMrWMhkNXrNhzR5"
+      statuses:
+        - "FAILED"
+
+  broadcasting:
+    configuration:
+      - id: "00000000-0000-0000-0000-000000000002"
+        type: "HTTP"
+        endpoint:
+          url: "http://localhost:8081"
+        retry:
+          maxRetries: 5
+          initialDelay: 1s
+          maxDelay: 30s
+          multiplier: 2.0
+    broadcasters:
+      - id: "00000000-0000-0000-0000-000000000003"
+        configurationId: "00000000-0000-0000-0000-000000000002"
+        target:
+          type: "CONTRACT_EVENT"
+          destinations:
+            - "/contract-events"
+      - id: "00000000-0000-0000-0000-000000000004"
+        configurationId: "00000000-0000-0000-0000-000000000002"
+        target:
+          type: "TRANSACTION"
+          destinations:
+            - "/transactions"
+
+  stores:
+    - nodeId: "00000000-0000-0000-0000-000000000001"
+      type: "GORM"
+      features:
+        - type: "EVENT"
+          strategy: "BLOCK_BASED"
+          targets:
+            - type: "BLOCK"
+              destination: "blocks"
+            - type: "TRANSACTION"
+              destination: "transactions"
+            - type: "CONTRACT_EVENT"
+              destination: "contract-events"
+        - type: "FILTER_SYNC"
+          destination: "filters"
+        - type: "LATEST_BLOCK"
+          destination: "latest_blocks"
+
+  database:
+    url: "${DATABASE_URL:postgres://postgres:postgres@localhost:5432/naryo?sslmode=disable}"
+
+  server:
+    port: "${SERVER_PORT:8060}"

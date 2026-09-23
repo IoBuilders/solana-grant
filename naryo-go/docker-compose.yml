@@ -1,0 +1,65 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: naryo
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - naryo_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d naryo"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Local Solana RPC node for testing: a fast in-memory validator that forks mainnet accounts
+  # on demand (https://github.com/solana-foundation/surfpool). Ships its own HEALTHCHECK
+  # (a getHealth RPC call), so `condition: service_healthy` below just works.
+  surfpool:
+    image: surfpool/surfpool:latest
+    ports:
+      - "8899:8899" # RPC
+      - "8900:8900" # WebSocket
+      - "18488:18488" # Studio dashboard
+
+  naryo-server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      surfpool:
+        condition: service_healthy
+    environment:
+      # Matches the default naryo.database.url in server/cmd/server/resources/application.yml,
+      # except the host is the "postgres" compose service instead of localhost.
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/naryo?sslmode=disable
+      # Point at the surfpool service instead of the application.yml default (localhost:8899,
+      # which inside this container means the container itself, not the host machine).
+      SOLANA_NODE_URL: ${SOLANA_NODE_URL:-http://surfpool:8899}
+      # Empty by default (falls back to whatever the loaded config's own default is); set on the
+      # host (e.g. `make example-quickstart`, which points it at the quickstart-receiver service
+      # below) to send broadcasts somewhere real.
+      BROADCASTER_URL: ${BROADCASTER_URL:-}
+      # Empty by default; set on the host (e.g. `make example-quickstart`) to point the server
+      # at an override config file baked into the image (see server/Dockerfile).
+      CONFIG_PATH: ${CONFIG_PATH:-}
+    ports:
+      - "8060:8060"
+
+  # Receiver for the quickstart example's broadcasts (examples/quickstart/http_server.go) —
+  # only for `make example-quickstart`, never started by a plain `compose-up`/`compose-restart`.
+  quickstart-receiver:
+    profiles: ["quickstart"]
+    build:
+      context: .
+      dockerfile: examples/quickstart/Dockerfile
+    ports:
+      - "8081:8081"
+
+volumes:
+  naryo_postgres_data:

@@ -1,0 +1,29 @@
+package {{ ToLower .Action }}{{ ToLower .Entity }}process
+
+import (
+	"github.com/google/uuid"
+	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/event"
+)
+
+type StartedEvent struct {
+	event.BaseEvent
+	ProcessId uuid.UUID
+	{{ .Entity }}Id   uuid.UUID
+}
+
+type OrderedEvent struct {
+	event.BaseEvent
+	ProcessId       uuid.UUID
+	TransactionHash string
+}
+
+type TransitToOrderedEvent struct {
+	event.BaseEvent
+	ProcessId uuid.UUID
+}
+
+type TransitToFinishedEvent struct {
+	event.BaseEvent
+	ProcessId uuid.UUID
+	{{ .Entity }}Id   uuid.UUID
+}

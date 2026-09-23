@@ -1,0 +1,262 @@
+{
+  "address": "hgUtrpstViwxutrkoVXwQh3GQC18wHAmuAvYFTNiV2M",
+  "metadata": {
+    "name": "snapshot",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "take_snapshot",
+      "discriminator": [
+        183,
+        210,
+        251,
+        68,
+        140,
+        132,
+        191,
+        140
+      ],
+      "accounts": [
+        {
+          "name": "calling_authority",
+          "signer": true
+        },
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mint"
+        },
+        {
+          "name": "snapshot_counter",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  110,
+                  97,
+                  112,
+                  115,
+                  104,
+                  111,
+                  116,
+                  95,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "snapshot_merkle_root",
+          "docs": [
+            "Immutable Merkle-root PDA for the snapshot being taken.",
+            "Seeds: `[\"snapshot_merkle_root\", mint, snapshot_id]`, where `snapshot_id`",
+            "is `snapshot_counter.count` (the next-id value read here at account",
+            "resolution)."
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  110,
+                  97,
+                  112,
+                  115,
+                  104,
+                  111,
+                  116,
+                  95,
+                  109,
+                  101,
+                  114,
+                  107,
+                  108,
+                  101,
+                  95,
+                  114,
+                  111,
+                  111,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              },
+              {
+                "kind": "account",
+                "path": "snapshot_counter.count",
+                "account": "SnapshotCounter"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "event_authority"
+        },
+        {
+          "name": "program"
+        }
+      ],
+      "args": [
+        {
+          "name": "merkle_root",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "SnapshotCounter",
+      "discriminator": [
+        170,
+        211,
+        63,
+        197,
+        196,
+        2,
+        1,
+        56
+      ]
+    },
+    {
+      "name": "SnapshotMerkleRoot",
+      "discriminator": [
+        175,
+        197,
+        152,
+        118,
+        124,
+        199,
+        75,
+        12
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "SnapshotTriggered",
+      "discriminator": [
+        33,
+        107,
+        94,
+        91,
+        80,
+        61,
+        227,
+        19
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "Unauthorized",
+      "msg": "Caller is not an authorised PDA (mint_authority, permanent_delegate, or transfer)"
+    },
+    {
+      "code": 6001,
+      "name": "SnapshotCounterOverflow",
+      "msg": "snapshot counter overflow when creating new snapshot"
+    }
+  ],
+  "types": [
+    {
+      "name": "SnapshotCounter",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "count",
+            "docs": [
+              "Id of the **next** snapshot (0-based)."
+            ],
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SnapshotMerkleRoot",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "merkle_root",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "SnapshotTriggered",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "snapshot_id",
+            "type": "u64"
+          },
+          {
+            "name": "merkle_root",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

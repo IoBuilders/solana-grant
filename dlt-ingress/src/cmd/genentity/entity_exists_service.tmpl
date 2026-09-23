@@ -1,0 +1,34 @@
+package service{{ ToLower .Entity }}
+
+import (
+	"context"
+	{{- if not .IsErrorRefactor}}
+	"dlt-ingress/src/main/{{ ToLower .BoundedContext }}/domain/domainerrors"
+	{{- end}}
+	"dlt-ingress/src/main/{{ ToLower .BoundedContext }}/domain/{{ ToLower .ExtraPath }}{{ ToLower .Entity }}"
+	"dlt-ingress/src/main/{{ ToLower .BoundedContext }}/port/repository/{{ ToLower .ExtraPath }}{{ ToLower .Entity }}"
+
+	"github.com/google/uuid"
+)
+
+type ExistsInterface interface {
+	Execute(ctx context.Context, {{ ToLowerFirst .Entity }}Id uuid.UUID) (*{{ ToLower .Entity }}.{{ .Entity }}, {{if .IsErrorRefactor}}error{{else}}*domainerrors.{{ .BoundedContext }}Error{{end}})
+}
+
+type Exists struct {
+	{{ ToLowerFirst .Entity }}Repo {{ ToLower .Entity }}repo.Repository
+}
+
+func NewExists({{ ToLowerFirst .Entity }}Repo {{ ToLower .Entity }}repo.Repository) *Exists {
+	return &Exists{ {{ ToLowerFirst .Entity }}Repo: {{ ToLowerFirst .Entity }}Repo}
+}
+
+func (s *Exists) Execute(ctx context.Context, {{ ToLowerFirst .Entity }}Id uuid.UUID) (*{{ ToLower .Entity }}.{{ .Entity }}, {{if .IsErrorRefactor}}error{{else}}*domainerrors.{{ .BoundedContext }}Error{{end}}) {
+	{{ .Entity }}, err := s.{{ ToLowerFirst .Entity }}Repo.FindByIdPreload(ctx, {{ ToLowerFirst .Entity }}Id)
+	if err != nil {
+		return nil, {{if .IsErrorRefactor}}err{{else}}err.(*domainerrors.{{ .BoundedContext }}Error){{end}}
+	}
+	return {{ .Entity }}, nil
+}
+
+var _ ExistsInterface = (*Exists)(nil)

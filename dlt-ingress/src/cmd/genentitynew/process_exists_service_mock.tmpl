@@ -1,0 +1,27 @@
+//go:build test
+
+package mockservice{{ ToLower .Entity }}
+
+import (
+	"context"
+
+	"dlt-ingress/src/main/{{ ToLower .BoundedContext }}/internal/domain/{{ ToLower .ExtraPath }}{{ .FolderName }}"
+	"dlt-ingress/src/main/{{ ToLower .BoundedContext }}/internal/domain/{{ ToLower .ExtraPath }}{{ .FolderName }}/service"
+
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/mock"
+)
+
+type ExistsMock struct {
+	mock.Mock
+}
+
+func (m *ExistsMock) Execute(ctx context.Context, {{ ToLowerFirst .Entity }}Id uuid.UUID) (*{{ ToLower .Entity }}.{{ .Entity }}, error) {
+	args := m.Called(ctx, {{ ToLowerFirst .Entity }}Id)
+	if args.Get(0) == nil {
+		return nil, args.Get(1).(error)
+	}
+	return args.Get(0).(*{{ ToLower .Entity }}.{{ .Entity }}), nil
+}
+
+var _ service{{ ToLower .Entity }}.ExistsInterface = (*ExistsMock)(nil)

@@ -1,0 +1,19 @@
+package order{{ ToLower .Name }}listener
+
+import (
+	"context"
+	"dlt-ingress/src/main/{{ ToLower .BoundedContext }}/internal/app/service/process/{{ ToLower .Name }}/order"
+	"dlt-ingress/src/main/{{ ToLower .BoundedContext }}/internal/domain/process/{{ ToLower .Name }}"
+)
+
+type Listener struct {
+	appService order{{ ToLower .Name }}.AppService
+}
+
+func NewListener(appService order{{ ToLower .Name }}.AppService) *Listener {
+	return &Listener{appService: appService}
+}
+
+func (l *Listener) Listen(ctx context.Context, event *{{ ToLower .Name }}process.StartedEvent) error {
+	return l.appService.Execute(ctx, order{{ ToLower .Name }}.Model{ProcessId: event.ProcessId})
+}

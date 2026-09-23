@@ -1,0 +1,13 @@
+package {{ ToLower .Entity }}repo
+
+import (
+	"github.com/google/uuid"
+	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/port/repository/base"
+)
+
+type {{ .Entity }} struct {
+	Process   baserepo.Process `gorm:"foreignKey:ProcessId;references:Id"`
+	ProcessId uuid.UUID        `gorm:"type:uuid;primaryKey"`
+	Name      string           `gorm:"type:varchar(255);not null"`
+	//TODO: AUTOGENERATE: Add persistence fields and remove me
+}

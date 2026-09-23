@@ -1,0 +1,88 @@
+# pause — Program Reference
+
+Program ID: `5j3F89fmVVusjwy9z3Rv5wLaVj4ovhwctQ7TRBsxNghq`
+
+Controls the Token-2022 `Pausable` extension. Owns the `["pausable_authority", mint]` PDA registered as the pausable authority during `deploy_mint`. When the mint is paused, Token-2022 rejects all `mint_to`, `burn`, and `transfer_checked` instructions at the protocol level.
+
+The pause state is also checked by `common::require_not_paused`, which is called by `freeze` (management instructions) and `transfer-control` before any management operation.
+
+---
+
+## Instruction: `pause` (Management)
+
+No parameters.
+
+Pauses the Token-2022 mint. All minting, burning, and transfers are blocked by Token-2022 until `unpause` is called.
+
+### Preconditions
+
+- `require_role` — signer must hold `ROLE_PAUSER`.
+- `require_active` — mint must not be deactivated.
+- `require_functionality(PAUSE_PAUSE)` — the mint's asset-class version must be finalized and have the `PAUSE_PAUSE` functionality bit enabled.
+
+### Accounts
+
+| Account | Mut | Signer | Type | Notes |
+|---|---|---|---|---|
+| `authority` | no | yes | Signer | Must hold `ROLE_PAUSER` (verified via `authority_roles_pda`) |
+| `authority_roles_pda` | no | no | AccountLoader<Roles> | seeds `[ROLES, mint, authority]`, `seeds::program = ACCESS_CONTROL_PROGRAM_ID`; read by `require_role` |
+| `asset_configuration_pda` | no | no | Account<AssetConfiguration> | seeds `["asset_configuration", mint]`, `seeds::program = DEPLOY_PROGRAM_ID`; used to derive `asset_class_version_pda` |
+| `deactivate_pda` | no | no | UncheckedAccount | seeds `["deactivate", mint]`, `seeds::program = DEACTIVATE_PROGRAM_ID`; must be empty |
+| `mint` | yes | no | UncheckedAccount | Token-2022 mint to pause |
+| `pausable_authority` | no | no | UncheckedAccount | seeds `["pausable_authority", mint]` (owned by this program); signs the Token-2022 pause CPI |
+| `asset_class_version_pda` | no | no | AccountLoader<AssetClassVersion> | seeds `["asset_class_version", config_id, version]`, `seeds::program = FACTORY_PROGRAM_ID`; read by `require_functionality` |
+| `token_2022_program` | no | no | Program<Token2022> | |
+| `event_authority` | no | no | UncheckedAccount | Anchor `#[event_cpi]`-injected PDA, seeds `["__event_authority"]` (owned by this program); signs the self-CPI that emits `Paused` |
+| `program` | no | no | UncheckedAccount | Anchor `#[event_cpi]`-injected account; this program's own ID, target of the self-CPI |
+
+### Execution
+
+1. `require_role(authority_roles_pda, ROLE_PAUSER)`
+2. `require_active(&deactivate_pda)`
+3. `require_functionality(asset_class_version_pda, PAUSE_PAUSE)`
+4. `invoke_signed` → `spl_pause(mint, pausable_authority)` signed with `["pausable_authority", mint, bump]`
+5. Emit `Paused { mint, operator: authority }` via `emit_cpi!`
+
+### Events
+
+| Event | Fields | Emitted |
+|---|---|---|
+| `Paused` | `mint: Pubkey`, `operator: Pubkey` | After the Token-2022 pause CPI succeeds |
+
+See [Emitting events](#emitting-events) below for why `emit_cpi!` is used and how the injected accounts work.
+
+---
+
+## Instruction: `unpause` (Management)
+
+No parameters.
+
+Unpauses the Token-2022 mint. Resumes normal minting, burning, and transfers.
+
+### Preconditions
+
+- `require_role` — signer must hold `ROLE_PAUSER`.
+- `require_active` — mint must not be deactivated.
+- `require_functionality(PAUSE_UNPAUSE)` — the mint's asset-class version must be finalized and have the `PAUSE_UNPAUSE` functionality bit enabled.
+
+### Accounts
+
+Same shape as `pause` (including the `authority` + `authority_roles_pda` role accounts, `asset_class_version_pda`, and the `#[event_cpi]`-injected `event_authority` and `program` accounts) but calls `spl_resume` (Token-2022 unpause instruction).
+
+### Events
+
+| Event | Fields | Emitted |
+|---|---|---|
+| `Unpaused` | `mint: Pubkey`, `operator: Pubkey` | After the Token-2022 resume CPI succeeds |
+
+---
+
+## Emitting events
+
+Both events are emitted with `emit_cpi!` (not `emit!`), which records the event as a self-CPI captured in the transaction's `innerInstructions` rather than in program logs — avoiding log-truncation loss for off-chain indexers. This requires `#[event_cpi]` on the `PauseMint` / `UnpauseMint` accounts structs (injecting the `event_authority` and `program` accounts) and the `event-cpi` feature on `anchor-lang` in `Cargo.toml`. Because these events live in inner instructions, Anchor's log-based `program.addEventListener` cannot see them; the test suite decodes them from `innerInstructions` instead (see `tests/program_helpers/event_helper.ts`).
+
+---
+
+## Program IDs
+
+Program IDs are imported from `common::program_ids` via `use common::program_ids as constants;` in each instruction file. There is no per-program `constants.rs`.

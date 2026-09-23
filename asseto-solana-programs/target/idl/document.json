@@ -1,0 +1,922 @@
+{
+  "address": "DzYjHw2JUBT8RdNqT8P5soRxJhmL6obibRUs5sMJ2Khi",
+  "metadata": {
+    "name": "document",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "remove_document",
+      "discriminator": [
+        181,
+        79,
+        140,
+        207,
+        121,
+        245,
+        27,
+        133
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "authority_roles_pda",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  111,
+                  108,
+                  101,
+                  115
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                235,
+                41,
+                191,
+                132,
+                186,
+                2,
+                100,
+                233,
+                201,
+                22,
+                224,
+                63,
+                181,
+                155,
+                128,
+                170,
+                45,
+                56,
+                111,
+                156,
+                131,
+                234,
+                141,
+                38,
+                46,
+                129,
+                42,
+                229,
+                87,
+                122,
+                173,
+                44
+              ]
+            }
+          }
+        },
+        {
+          "name": "asset_configuration_pda",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  115,
+                  115,
+                  101,
+                  116,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103,
+                  117,
+                  114,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                240,
+                182,
+                77,
+                149,
+                174,
+                242,
+                208,
+                54,
+                31,
+                138,
+                200,
+                30,
+                243,
+                31,
+                148,
+                113,
+                161,
+                240,
+                63,
+                40,
+                108,
+                82,
+                42,
+                48,
+                110,
+                115,
+                30,
+                160,
+                98,
+                125,
+                248,
+                52
+              ]
+            }
+          }
+        },
+        {
+          "name": "deactivate_pda",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  97,
+                  99,
+                  116,
+                  105,
+                  118,
+                  97,
+                  116,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                238,
+                43,
+                105,
+                162,
+                163,
+                237,
+                139,
+                95,
+                81,
+                45,
+                69,
+                187,
+                195,
+                53,
+                53,
+                92,
+                147,
+                252,
+                127,
+                84,
+                5,
+                224,
+                26,
+                131,
+                233,
+                21,
+                47,
+                51,
+                149,
+                90,
+                20,
+                208
+              ]
+            }
+          }
+        },
+        {
+          "name": "mint"
+        },
+        {
+          "name": "document_pda",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  111,
+                  99,
+                  117,
+                  109,
+                  101,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              },
+              {
+                "kind": "arg",
+                "path": "name"
+              }
+            ]
+          }
+        },
+        {
+          "name": "asset_class_version_pda",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  115,
+                  115,
+                  101,
+                  116,
+                  95,
+                  99,
+                  108,
+                  97,
+                  115,
+                  115,
+                  95,
+                  118,
+                  101,
+                  114,
+                  115,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "asset_configuration_pda.asset_class_config_id",
+                "account": "AssetConfiguration"
+              },
+              {
+                "kind": "account",
+                "path": "asset_configuration_pda.asset_class_version_id",
+                "account": "AssetConfiguration"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                211,
+                123,
+                97,
+                49,
+                148,
+                61,
+                0,
+                123,
+                122,
+                206,
+                49,
+                38,
+                235,
+                135,
+                128,
+                117,
+                92,
+                177,
+                90,
+                249,
+                180,
+                1,
+                59,
+                22,
+                82,
+                69,
+                14,
+                21,
+                75,
+                204,
+                57,
+                168
+              ]
+            }
+          }
+        },
+        {
+          "name": "event_authority"
+        },
+        {
+          "name": "program"
+        }
+      ],
+      "args": [
+        {
+          "name": "name",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "set_document",
+      "discriminator": [
+        201,
+        45,
+        102,
+        179,
+        191,
+        210,
+        131,
+        46
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "authority_roles_pda",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  111,
+                  108,
+                  101,
+                  115
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                235,
+                41,
+                191,
+                132,
+                186,
+                2,
+                100,
+                233,
+                201,
+                22,
+                224,
+                63,
+                181,
+                155,
+                128,
+                170,
+                45,
+                56,
+                111,
+                156,
+                131,
+                234,
+                141,
+                38,
+                46,
+                129,
+                42,
+                229,
+                87,
+                122,
+                173,
+                44
+              ]
+            }
+          }
+        },
+        {
+          "name": "asset_configuration_pda",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  115,
+                  115,
+                  101,
+                  116,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103,
+                  117,
+                  114,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                240,
+                182,
+                77,
+                149,
+                174,
+                242,
+                208,
+                54,
+                31,
+                138,
+                200,
+                30,
+                243,
+                31,
+                148,
+                113,
+                161,
+                240,
+                63,
+                40,
+                108,
+                82,
+                42,
+                48,
+                110,
+                115,
+                30,
+                160,
+                98,
+                125,
+                248,
+                52
+              ]
+            }
+          }
+        },
+        {
+          "name": "deactivate_pda",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  97,
+                  99,
+                  116,
+                  105,
+                  118,
+                  97,
+                  116,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                238,
+                43,
+                105,
+                162,
+                163,
+                237,
+                139,
+                95,
+                81,
+                45,
+                69,
+                187,
+                195,
+                53,
+                53,
+                92,
+                147,
+                252,
+                127,
+                84,
+                5,
+                224,
+                26,
+                131,
+                233,
+                21,
+                47,
+                51,
+                149,
+                90,
+                20,
+                208
+              ]
+            }
+          }
+        },
+        {
+          "name": "mint"
+        },
+        {
+          "name": "document_pda",
+          "docs": [
+            "the handler instead of by `init_if_needed`, because Anchor's init",
+            "constraint asserts `space == data_len()` on every call and this",
+            "account's size is a function of the `uri` argument. Owner and",
+            "discriminator are checked in the handler before an existing account",
+            "is overwritten."
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  111,
+                  99,
+                  117,
+                  109,
+                  101,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              },
+              {
+                "kind": "arg",
+                "path": "name"
+              }
+            ]
+          }
+        },
+        {
+          "name": "asset_class_version_pda",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  115,
+                  115,
+                  101,
+                  116,
+                  95,
+                  99,
+                  108,
+                  97,
+                  115,
+                  115,
+                  95,
+                  118,
+                  101,
+                  114,
+                  115,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "asset_configuration_pda.asset_class_config_id",
+                "account": "AssetConfiguration"
+              },
+              {
+                "kind": "account",
+                "path": "asset_configuration_pda.asset_class_version_id",
+                "account": "AssetConfiguration"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                211,
+                123,
+                97,
+                49,
+                148,
+                61,
+                0,
+                123,
+                122,
+                206,
+                49,
+                38,
+                235,
+                135,
+                128,
+                117,
+                92,
+                177,
+                90,
+                249,
+                180,
+                1,
+                59,
+                22,
+                82,
+                69,
+                14,
+                21,
+                75,
+                204,
+                57,
+                168
+              ]
+            }
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "event_authority"
+        },
+        {
+          "name": "program"
+        }
+      ],
+      "args": [
+        {
+          "name": "name",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "uri",
+          "type": "string"
+        },
+        {
+          "name": "document_hash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Document",
+      "discriminator": [
+        226,
+        212,
+        133,
+        177,
+        48,
+        5,
+        171,
+        243
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "DocumentRemoved",
+      "discriminator": [
+        239,
+        104,
+        11,
+        151,
+        144,
+        28,
+        87,
+        55
+      ]
+    },
+    {
+      "name": "DocumentUpdated",
+      "discriminator": [
+        132,
+        179,
+        66,
+        134,
+        226,
+        122,
+        182,
+        139
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "EmptyUri",
+      "msg": "Document URI must not be empty"
+    }
+  ],
+  "types": [
+    {
+      "name": "AssetConfiguration",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "asset_class_config_id",
+            "type": "u64"
+          },
+          {
+            "name": "asset_class_version_id",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Document",
+      "docs": [
+        "`mint` is stored first (right after the 8-byte discriminator) so",
+        "`getProgramAccounts` + `memcmp(offset = 8, mint)` can enumerate every",
+        "document belonging to a mint off-chain — see `docs/document.md`."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "name",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "uri",
+            "type": "string"
+          },
+          {
+            "name": "document_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DocumentRemoved",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "operator",
+            "type": "pubkey"
+          },
+          {
+            "name": "name",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "uri",
+            "type": "string"
+          },
+          {
+            "name": "document_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "DocumentUpdated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "operator",
+            "type": "pubkey"
+          },
+          {
+            "name": "name",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "uri",
+            "type": "string"
+          },
+          {
+            "name": "document_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

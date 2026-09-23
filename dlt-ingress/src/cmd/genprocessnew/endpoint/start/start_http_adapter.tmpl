@@ -1,0 +1,53 @@
+package start{{ ToLower .Name }}api
+
+import (
+	"context"
+	"net/http"
+	"dlt-ingress/src/main/{{ ToLower .BoundedContext }}/internal/app/service/process/{{ ToLower .Name }}/start"
+
+	coreApi "gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/api"
+)
+
+// keeps the coreApi import alive so swag can resolve coreApi.ErrorResponse in @Failure annotations
+var _ coreApi.ErrorResponse
+
+// TODO: AUTOGENERATE: Define the correct URL path with : for params instead of {}
+// Example: "/{{ ToLower .BoundedContext }}/{{ ToLower .Entity }}s/:id/{{ ToLower .Action }}" instead of "/{{ ToLower .BoundedContext }}/{{ ToLower .Entity }}s/{id}/{{ ToLower .Action }}"
+const UrlPath = "{{ .Url }}"
+const Feature = "{{ .Name }}"
+
+type Endpoint struct {
+	service start{{ ToLower .Name }}.AppService
+}
+
+func NewEndpoint(service start{{ ToLower .Name }}.AppService) *Endpoint {
+	return &Endpoint{service: service}
+}
+
+// Handle godoc
+//
+// @Summary {{ Title (ToNatural .Name) }}
+// @Description Initiate the process for {{ ToNatural .Name }}
+// @Tags {{ Title (ToNatural .BoundedContext) }}
+// @ID start-{{ ToLower .Name }}
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param body body Request false "Request body"
+// @Success 202 {object} start{{ ToLower .Name }}.Response
+// @Failure 400 {object} coreApi.ErrorResponse
+// @Failure 401 {object} coreApi.ErrorResponse
+// @Failure 404 {object} coreApi.ErrorResponse
+// @Router {{ .Url }} [{{ ToLower .HttpMethod }}]
+// TODO: AUTOGENERATE: Check if url has params, add them to the swagger, and remove me
+func (e *Endpoint) Handle(ctx context.Context, req *coreApi.HttpAdapterRequest[Request]) (*coreApi.HttpAdapterResponse[start{{ ToLower .Name }}.Response], error) {
+	response, err := e.service.Execute(ctx, start{{ ToLower .Name }}.Model{
+		CallbackUrl: req.Body.CallbackUrl,
+		// TODO: Add additional model fields as needed
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return coreApi.NewHttpAdapterResponse(http.StatusAccepted, &response), nil
+}

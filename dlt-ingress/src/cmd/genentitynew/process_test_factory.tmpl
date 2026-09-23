@@ -1,0 +1,44 @@
+//go:build test || integration
+
+package {{ ToLower .Entity }}
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/google/uuid"
+	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/domain/base"
+)
+
+type {{ .Entity }}Configurator func(*{{ .Entity }})
+
+type {{ .Entity }}TestFactory struct {
+	Repo Repository
+}
+
+func New{{ .Entity }}TestFactory(repo Repository) *{{ .Entity }}TestFactory {
+	return &{{ .Entity }}TestFactory{Repo: repo}
+}
+
+func (f *{{ .Entity }}TestFactory) Create(config ...{{ .Entity }}Configurator) (*{{ .Entity }}, error) {
+	entity := f.CreateEntity(config...)
+	return entity, f.Repo.Create(context.Background(), entity)
+}
+
+func (f *{{ .Entity }}TestFactory) CreateEntity(config ...{{ .Entity }}Configurator) *{{ .Entity }} {
+	uniqueId := uuid.New()
+	entity := &{{ .Entity }}{
+		Process: base.Process{
+			Entity:   base.Entity{Id: uniqueId},
+			Status:   base.Started,
+			Type:     base.Type("{{ .TypeName }}"),
+			EntityId: uuid.New(),
+		},
+		Name: fmt.Sprintf("Test{{ .Entity }}-%s", uniqueId.String()[:8]),
+		//TODO: AUTOGENERATE: Add default test fields and remove me
+	}
+	for _, c := range config {
+		c(entity)
+	}
+	return entity
+}

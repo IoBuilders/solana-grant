@@ -1,0 +1,1802 @@
+{
+  "address": "FEY9E77nH7R1gLGNxkhYKchJpB6MgpMrWMhkNXrNhzR5",
+  "metadata": {
+    "name": "factory",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "accept_asset_class_ownership",
+      "discriminator": [
+        205,
+        253,
+        86,
+        237,
+        39,
+        143,
+        0,
+        10
+      ],
+      "accounts": [
+        {
+          "name": "pending_owner",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "factory",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  102,
+                  97,
+                  99,
+                  116,
+                  111,
+                  114,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "asset_class_ownership_pda",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  115,
+                  115,
+                  101,
+                  116,
+                  95,
+                  99,
+                  108,
+                  97,
+                  115,
+                  115,
+                  95,
+                  111,
+                  119,
+                  110,
+                  101,
+                  114,
+                  115,
+                  104,
+                  105,
+                  112
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "config_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "asset_class_pending_owner_pda",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  115,
+                  115,
+                  101,
+                  116,
+                  95,
+                  99,
+                  108,
+                  97,
+                  115,
+                  115,
+                  95,
+                  112,
+                  101,
+                  110,
+                  100,
+                  105,
+                  110,
+                  103,
+                  95,
+                  111,
+                  119,
+                  110,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "config_id"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "config_id",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "accept_nomination",
+      "discriminator": [
+        126,
+        254,
+        37,
+        185,
+        168,
+        32,
+        50,
+        143
+      ],
+      "accounts": [
+        {
+          "name": "pending_manager",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "factory",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  102,
+                  97,
+                  99,
+                  116,
+                  111,
+                  114,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "factory_pending_manager_pda",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  102,
+                  97,
+                  99,
+                  116,
+                  111,
+                  114,
+                  121,
+                  95,
+                  112,
+                  101,
+                  110,
+                  100,
+                  105,
+                  110,
+                  103,
+                  95,
+                  109,
+                  97,
+                  110,
+                  97,
+                  103,
+                  101,
+                  114
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "cancel_asset_class_ownership",
+      "discriminator": [
+        71,
+        143,
+        99,
+        79,
+        221,
+        192,
+        153,
+        186
+      ],
+      "accounts": [
+        {
+          "name": "current_owner",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "factory",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  102,
+                  97,
+                  99,
+                  116,
+                  111,
+                  114,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "asset_class_ownership_pda",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  115,
+                  115,
+                  101,
+                  116,
+                  95,
+                  99,
+                  108,
+                  97,
+                  115,
+                  115,
+                  95,
+                  111,
+                  119,
+                  110,
+                  101,
+                  114,
+                  115,
+                  104,
+                  105,
+                  112
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "config_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "asset_class_pending_owner_pda",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  115,
+                  115,
+                  101,
+                  116,
+                  95,
+                  99,
+                  108,
+                  97,
+                  115,
+                  115,
+                  95,
+                  112,
+                  101,
+                  110,
+                  100,
+                  105,
+                  110,
+                  103,
+                  95,
+                  111,
+                  119,
+                  110,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "config_id"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "config_id",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "cancel_nomination",
+      "discriminator": [
+        95,
+        2,
+        136,
+        89,
+        181,
+        232,
+        153,
+        174
+      ],
+      "accounts": [
+        {
+          "name": "current_manager",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "factory",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  102,
+                  97,
+                  99,
+                  116,
+                  111,
+                  114,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "factory_pending_manager_pda",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  102,
+                  97,
+                  99,
+                  116,
+                  111,
+                  114,
+                  121,
+                  95,
+                  112,
+                  101,
+                  110,
+                  100,
+                  105,
+                  110,
+                  103,
+                  95,
+                  109,
+                  97,
+                  110,
+                  97,
+                  103,
+                  101,
+                  114
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "create_asset_class",
+      "discriminator": [
+        54,
+        43,
+        221,
+        168,
+        187,
+        80,
+        204,
+        18
+      ],
+      "accounts": [
+        {
+          "name": "manager",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "factory",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  102,
+                  97,
+                  99,
+                  116,
+                  111,
+                  114,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "asset_class_ownership_pda",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  115,
+                  115,
+                  101,
+                  116,
+                  95,
+                  99,
+                  108,
+                  97,
+                  115,
+                  115,
+                  95,
+                  111,
+                  119,
+                  110,
+                  101,
+                  114,
+                  115,
+                  104,
+                  105,
+                  112
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "config_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "event_authority"
+        },
+        {
+          "name": "program"
+        }
+      ],
+      "args": [
+        {
+          "name": "config_id",
+          "type": "u64"
+        },
+        {
+          "name": "owner",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "disable_asset_class_version_functionalities",
+      "discriminator": [
+        132,
+        142,
+        11,
+        174,
+        163,
+        48,
+        69,
+        188
+      ],
+      "accounts": [
+        {
+          "name": "owner",
+          "signer": true
+        },
+        {
+          "name": "factory",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  102,
+                  97,
+                  99,
+                  116,
+                  111,
+                  114,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "asset_class_ownership_pda",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  115,
+                  115,
+                  101,
+                  116,
+                  95,
+                  99,
+                  108,
+                  97,
+                  115,
+                  115,
+                  95,
+                  111,
+                  119,
+                  110,
+                  101,
+                  114,
+                  115,
+                  104,
+                  105,
+                  112
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "config_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "asset_class_version_pda",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  115,
+                  115,
+                  101,
+                  116,
+                  95,
+                  99,
+                  108,
+                  97,
+                  115,
+                  115,
+                  95,
+                  118,
+                  101,
+                  114,
+                  115,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "config_id"
+              },
+              {
+                "kind": "arg",
+                "path": "version"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "config_id",
+          "type": "u64"
+        },
+        {
+          "name": "version",
+          "type": "u64"
+        },
+        {
+          "name": "functionalities",
+          "type": {
+            "vec": "u16"
+          }
+        }
+      ]
+    },
+    {
+      "name": "enable_asset_class_version_functionalities",
+      "discriminator": [
+        164,
+        68,
+        237,
+        85,
+        52,
+        244,
+        71,
+        240
+      ],
+      "accounts": [
+        {
+          "name": "owner",
+          "signer": true
+        },
+        {
+          "name": "factory",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  102,
+                  97,
+                  99,
+                  116,
+                  111,
+                  114,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "asset_class_ownership_pda",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  115,
+                  115,
+                  101,
+                  116,
+                  95,
+                  99,
+                  108,
+                  97,
+                  115,
+                  115,
+                  95,
+                  111,
+                  119,
+                  110,
+                  101,
+                  114,
+                  115,
+                  104,
+                  105,
+                  112
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "config_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "asset_class_version_pda",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  115,
+                  115,
+                  101,
+                  116,
+                  95,
+                  99,
+                  108,
+                  97,
+                  115,
+                  115,
+                  95,
+                  118,
+                  101,
+                  114,
+                  115,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "config_id"
+              },
+              {
+                "kind": "arg",
+                "path": "version"
+              }
+            ]
+          }
+        },
+        {
+          "name": "event_authority"
+        },
+        {
+          "name": "program"
+        }
+      ],
+      "args": [
+        {
+          "name": "config_id",
+          "type": "u64"
+        },
+        {
+          "name": "version",
+          "type": "u64"
+        },
+        {
+          "name": "functionalities",
+          "type": {
+            "vec": "u16"
+          }
+        }
+      ]
+    },
+    {
+      "name": "finalize_asset_class_version",
+      "discriminator": [
+        175,
+        175,
+        18,
+        111,
+        214,
+        108,
+        212,
+        218
+      ],
+      "accounts": [
+        {
+          "name": "owner",
+          "signer": true
+        },
+        {
+          "name": "factory",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  102,
+                  97,
+                  99,
+                  116,
+                  111,
+                  114,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "asset_class_ownership_pda",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  115,
+                  115,
+                  101,
+                  116,
+                  95,
+                  99,
+                  108,
+                  97,
+                  115,
+                  115,
+                  95,
+                  111,
+                  119,
+                  110,
+                  101,
+                  114,
+                  115,
+                  104,
+                  105,
+                  112
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "config_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "asset_class_version_pda",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  115,
+                  115,
+                  101,
+                  116,
+                  95,
+                  99,
+                  108,
+                  97,
+                  115,
+                  115,
+                  95,
+                  118,
+                  101,
+                  114,
+                  115,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "config_id"
+              },
+              {
+                "kind": "arg",
+                "path": "version"
+              }
+            ]
+          }
+        },
+        {
+          "name": "event_authority"
+        },
+        {
+          "name": "program"
+        }
+      ],
+      "args": [
+        {
+          "name": "config_id",
+          "type": "u64"
+        },
+        {
+          "name": "version",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "init_asset_class_version",
+      "discriminator": [
+        197,
+        232,
+        31,
+        11,
+        25,
+        116,
+        94,
+        121
+      ],
+      "accounts": [
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "factory",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  102,
+                  97,
+                  99,
+                  116,
+                  111,
+                  114,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "asset_class_ownership_pda",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  115,
+                  115,
+                  101,
+                  116,
+                  95,
+                  99,
+                  108,
+                  97,
+                  115,
+                  115,
+                  95,
+                  111,
+                  119,
+                  110,
+                  101,
+                  114,
+                  115,
+                  104,
+                  105,
+                  112
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "config_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "asset_class_version_pda",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  115,
+                  115,
+                  101,
+                  116,
+                  95,
+                  99,
+                  108,
+                  97,
+                  115,
+                  115,
+                  95,
+                  118,
+                  101,
+                  114,
+                  115,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "config_id"
+              },
+              {
+                "kind": "arg",
+                "path": "version"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "event_authority"
+        },
+        {
+          "name": "program"
+        }
+      ],
+      "args": [
+        {
+          "name": "config_id",
+          "type": "u64"
+        },
+        {
+          "name": "version",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "initialize",
+      "discriminator": [
+        175,
+        175,
+        109,
+        31,
+        13,
+        152,
+        155,
+        237
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "manager",
+          "signer": true
+        },
+        {
+          "name": "factory",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  102,
+                  97,
+                  99,
+                  116,
+                  111,
+                  114,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "event_authority"
+        },
+        {
+          "name": "program"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "nominate_asset_class_owner",
+      "discriminator": [
+        114,
+        111,
+        83,
+        48,
+        225,
+        82,
+        200,
+        17
+      ],
+      "accounts": [
+        {
+          "name": "current_owner",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "factory",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  102,
+                  97,
+                  99,
+                  116,
+                  111,
+                  114,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "asset_class_ownership_pda",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  115,
+                  115,
+                  101,
+                  116,
+                  95,
+                  99,
+                  108,
+                  97,
+                  115,
+                  115,
+                  95,
+                  111,
+                  119,
+                  110,
+                  101,
+                  114,
+                  115,
+                  104,
+                  105,
+                  112
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "config_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "asset_class_pending_owner_pda",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  115,
+                  115,
+                  101,
+                  116,
+                  95,
+                  99,
+                  108,
+                  97,
+                  115,
+                  115,
+                  95,
+                  112,
+                  101,
+                  110,
+                  100,
+                  105,
+                  110,
+                  103,
+                  95,
+                  111,
+                  119,
+                  110,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "config_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "config_id",
+          "type": "u64"
+        },
+        {
+          "name": "new_owner",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "nominate_manager",
+      "discriminator": [
+        42,
+        37,
+        5,
+        142,
+        200,
+        167,
+        25,
+        14
+      ],
+      "accounts": [
+        {
+          "name": "current_manager",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "factory",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  102,
+                  97,
+                  99,
+                  116,
+                  111,
+                  114,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "factory_pending_manager_pda",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  102,
+                  97,
+                  99,
+                  116,
+                  111,
+                  114,
+                  121,
+                  95,
+                  112,
+                  101,
+                  110,
+                  100,
+                  105,
+                  110,
+                  103,
+                  95,
+                  109,
+                  97,
+                  110,
+                  97,
+                  103,
+                  101,
+                  114
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "new_manager",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "pause",
+      "discriminator": [
+        211,
+        22,
+        221,
+        251,
+        74,
+        121,
+        193,
+        47
+      ],
+      "accounts": [
+        {
+          "name": "manager",
+          "signer": true
+        },
+        {
+          "name": "factory",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  102,
+                  97,
+                  99,
+                  116,
+                  111,
+                  114,
+                  121
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "unpause",
+      "discriminator": [
+        169,
+        144,
+        4,
+        38,
+        10,
+        141,
+        188,
+        255
+      ],
+      "accounts": [
+        {
+          "name": "manager",
+          "signer": true
+        },
+        {
+          "name": "factory",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  102,
+                  97,
+                  99,
+                  116,
+                  111,
+                  114,
+                  121
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "AssetClassOwnership",
+      "discriminator": [
+        172,
+        104,
+        208,
+        239,
+        210,
+        77,
+        128,
+        255
+      ]
+    },
+    {
+      "name": "AssetClassPendingOwner",
+      "discriminator": [
+        119,
+        144,
+        247,
+        116,
+        188,
+        185,
+        96,
+        17
+      ]
+    },
+    {
+      "name": "AssetClassVersion",
+      "discriminator": [
+        255,
+        193,
+        180,
+        87,
+        186,
+        245,
+        78,
+        199
+      ]
+    },
+    {
+      "name": "Factory",
+      "discriminator": [
+        159,
+        68,
+        192,
+        61,
+        48,
+        249,
+        216,
+        202
+      ]
+    },
+    {
+      "name": "FactoryPendingManager",
+      "discriminator": [
+        252,
+        131,
+        28,
+        172,
+        212,
+        216,
+        174,
+        108
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "AssetClassCreated",
+      "discriminator": [
+        62,
+        173,
+        188,
+        91,
+        122,
+        94,
+        47,
+        172
+      ]
+    },
+    {
+      "name": "AssetClassVersionFinalized",
+      "discriminator": [
+        116,
+        56,
+        203,
+        0,
+        55,
+        146,
+        124,
+        87
+      ]
+    },
+    {
+      "name": "AssetClassVersionFunctionalitiesEnabled",
+      "discriminator": [
+        40,
+        130,
+        149,
+        165,
+        60,
+        25,
+        94,
+        79
+      ]
+    },
+    {
+      "name": "AssetClassVersionInitialized",
+      "discriminator": [
+        67,
+        55,
+        166,
+        66,
+        247,
+        192,
+        196,
+        20
+      ]
+    },
+    {
+      "name": "FactoryInitialized",
+      "discriminator": [
+        20,
+        86,
+        103,
+        75,
+        20,
+        220,
+        162,
+        63
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "NotManager",
+      "msg": "Signer is not the current factory manager"
+    },
+    {
+      "code": 6001,
+      "name": "NotPendingManager",
+      "msg": "Signer is not the pending manager"
+    },
+    {
+      "code": 6002,
+      "name": "FactoryPaused",
+      "msg": "Factory is paused"
+    },
+    {
+      "code": 6003,
+      "name": "FactoryNotPaused",
+      "msg": "Factory is not paused"
+    },
+    {
+      "code": 6004,
+      "name": "NotOwner",
+      "msg": "Signer is not the current asset class owner"
+    },
+    {
+      "code": 6005,
+      "name": "NotPendingOwner",
+      "msg": "Signer is not the pending asset class owner"
+    },
+    {
+      "code": 6006,
+      "name": "InvalidVersion",
+      "msg": "Version must be the asset class's latest version + 1"
+    },
+    {
+      "code": 6007,
+      "name": "VersionNotDraft",
+      "msg": "Asset class version is not in Draft state"
+    },
+    {
+      "code": 6008,
+      "name": "FunctionalityOutOfBounds",
+      "msg": "Functionality is past the mask capacity"
+    },
+    {
+      "code": 6009,
+      "name": "Overflow",
+      "msg": "Arithmetic overflow"
+    }
+  ],
+  "types": [
+    {
+      "name": "AssetClassCreated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "config_id",
+            "type": "u64"
+          },
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "manager",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "AssetClassOwnership",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "latest_version",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "AssetClassPendingOwner",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "pending_owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "AssetClassVersion",
+      "serialization": "bytemuck",
+      "repr": {
+        "kind": "c"
+      },
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "config_id",
+            "type": "u64"
+          },
+          {
+            "name": "version",
+            "type": "u64"
+          },
+          {
+            "name": "state",
+            "type": "u8"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "_padding",
+            "type": {
+              "array": [
+                "u8",
+                6
+              ]
+            }
+          },
+          {
+            "name": "mask",
+            "type": {
+              "array": [
+                "u8",
+                1024
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "AssetClassVersionFinalized",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "config_id",
+            "type": "u64"
+          },
+          {
+            "name": "version",
+            "type": "u64"
+          },
+          {
+            "name": "owner",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "AssetClassVersionFunctionalitiesEnabled",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "config_id",
+            "type": "u64"
+          },
+          {
+            "name": "version",
+            "type": "u64"
+          },
+          {
+            "name": "functionalities",
+            "type": {
+              "vec": "u16"
+            }
+          },
+          {
+            "name": "owner",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "AssetClassVersionInitialized",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "config_id",
+            "type": "u64"
+          },
+          {
+            "name": "version",
+            "type": "u64"
+          },
+          {
+            "name": "owner",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Factory",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "manager",
+            "type": "pubkey"
+          },
+          {
+            "name": "pause",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "FactoryInitialized",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "manager",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "FactoryPendingManager",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "pending_manager",
+            "type": "pubkey"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ]
+}

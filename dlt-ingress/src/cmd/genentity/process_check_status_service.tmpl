@@ -1,0 +1,40 @@
+package service{{ ToLower .Action }}{{ ToLower .Entity }}process
+
+import (
+	"context"
+	{{- if not .IsErrorRefactor}}
+	"dlt-ingress/src/main/{{ ToLower .BoundedContext }}/domain/domainerrors"
+	{{- end}}
+	"dlt-ingress/src/main/{{ ToLower .BoundedContext }}/domain/process/{{ ToLower .Action }}{{ ToLower .Entity }}"
+	"dlt-ingress/src/main/{{ ToLower .BoundedContext }}/port/repository/process/{{ ToLower .Action }}{{ ToLower .Entity }}"
+
+	"github.com/google/uuid"
+	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/domain/baseprocess"
+	{{- if .IsErrorRefactor}}
+	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/domain/domainerrors"
+	{{- end}}
+)
+
+type StatusCheckInterface interface {
+	Execute(ctx context.Context, processId uuid.UUID, expected baseprocess.ProcessStatus) (*{{ ToLower .Action }}{{ ToLower .Entity }}process.{{ .Action }}{{ .Entity }}Process, {{if .IsErrorRefactor}}error{{else}}*domainerrors.{{ .BoundedContext }}Error{{end}})
+}
+
+type StatusCheck struct {
+	processRepo {{ ToLower .Action }}{{ ToLower .Entity }}processrepo.Repository
+}
+
+func NewStatusCheck(processRepo {{ ToLower .Action }}{{ ToLower .Entity }}processrepo.Repository) *StatusCheck {
+	return &StatusCheck{processRepo: processRepo}
+}
+
+func (s *StatusCheck) Execute(ctx context.Context, processId uuid.UUID, expected baseprocess.ProcessStatus) (*{{ ToLower .Action }}{{ ToLower .Entity }}process.{{ .Action }}{{ .Entity }}Process, {{if .IsErrorRefactor}}error{{else}}*domainerrors.{{ .BoundedContext }}Error{{end}}) {
+	processEntity, err := s.processRepo.FindByIdPreload(ctx, processId)
+	if err != nil {
+		return nil, {{if .IsErrorRefactor}}err{{else}}err.(*domainerrors.{{ .BoundedContext }}Error){{end}}
+	} else if processEntity.BaseProcess.Status != expected {
+		return nil, domainerrors.{{if .IsErrorRefactor}}NewEntityUnexpectedStatusDomainError{{else}}NewEntityUnexpectedStatusError{{end}}("{{ .Action }}{{ .Entity }}Process", processId, string(processEntity.BaseProcess.Status), string(expected))
+	}
+	return processEntity, nil
+}
+
+var _ StatusCheckInterface = (*StatusCheck)(nil)

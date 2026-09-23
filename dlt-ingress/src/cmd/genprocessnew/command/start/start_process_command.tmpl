@@ -1,0 +1,17 @@
+package start{{ ToLower .Name }}
+
+import (
+	"dlt-ingress/src/main/{{ ToLower .BoundedContext }}/internal/domain/process/{{ ToLower .Name }}"
+
+	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/command"
+)
+
+// Command represents a command to start a new {{ ToNatural .Name }} process.
+type Command struct {
+	command.ProcessCommand
+	//TODO: AUTOGENERATE: Add command fields and remove me
+}
+
+type Response struct {
+	{{ ToLower .Name }}process.StartedEvent
+}

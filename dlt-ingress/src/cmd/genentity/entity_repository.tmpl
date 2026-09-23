@@ -1,0 +1,10 @@
+package {{ ToLower .Entity }}repo
+
+import (
+	"dlt-ingress/src/main/{{ ToLower .BoundedContext }}/domain/{{ ToLower .ExtraPath }}{{ ToLower .Entity }}"
+	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/port/repository"
+)
+
+type Repository interface {
+	repository.BaseRepository[Repository, {{ ToLower .Entity }}.{{ .Entity }}]
+}
