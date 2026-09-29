@@ -78,20 +78,6 @@ procedure, with one adjustment: it normally has you start your own local Solana 
 but this quickstart skips that step and reuses the surfpool instance already running from
 naryo-go's Step 1 above.
 
-**Private repository access** (once per machine, from `dlt-ingress`'s own README): create a
-`~/.netrc` with your GitLab credentials, and set `GOPROXY`'s private-module escape hatch before
-running any `go` command against it:
-
-```bash
-touch ~/.netrc
-# add to ~/.netrc:
-#   machine gitlab.com
-#   login <username>
-#   password <gitlab-token>
-
-export GOPRIVATE=gitlab.com/iobuilders/*
-```
-
 In a separate checkout of `dlt-ingress`:
 
 **Start the local infrastructure**: `dlt-ingress`'s own dependencies (Postgres, and an

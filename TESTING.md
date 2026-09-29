@@ -75,7 +75,7 @@ docker-compose up -d
 
 This starts dlt-ingress's own Postgres instance and a [ministack](https://hub.docker.com/r/ministackorg/ministack) instance (emulating AWS, including KMS) on `localhost:4566`, matching the defaults in `src/main/config/application.yml`. dlt-ingress's default `ASSETO_DEFAULT_NETWORK_URL` is `http://127.0.0.1:8899` — the same surfpool instance already running from Step 1, so no separate validator is needed.
 
-> If `go mod` needs to fetch ioBuilders-private Go modules here, see dlt-ingress's own `.netrc` / `GOPRIVATE` setup note in [`dlt-ingress/README.md`](dlt-ingress/README.md).
+dlt-ingress has no private Go module dependencies, so no ioBuilders GitLab access or `GOPRIVATE`/`.netrc` setup is needed to build or run it.
 
 ## Step 4: Run dlt-ingress's examples
 
