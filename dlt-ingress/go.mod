@@ -23,7 +23,6 @@ require (
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.40.0
 	github.com/umbracle/ethgo v0.1.3
 	gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4 v4.30.0
-	gitlab.com/iobuilders/projects/eng/o2d/asseto-contracts-wrappers/v12 v12.0.0
 	go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin v0.65.0
 	golang.org/x/crypto v0.47.0
 	gorm.io/gorm v1.31.1
@@ -31,9 +30,6 @@ require (
 
 // For local lib dev
 // replace gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4 => ../iob-go-core
-
-//
-//replace gitlab.com/iobuilders/projects/eng/o2d/asseto-contracts-wrappers/v12 => ../asseto-contracts-wrappers
 
 //
 //replace gitlab.com/iobuilders/projects/eng/iob-core/iob-go-scheduler/v3 => ../iob-go-scheduler
@@ -109,7 +105,6 @@ require (
 	github.com/oasisprotocol/curve25519-voi v0.0.0-20251114093237-2ab5a27a1729 // indirect
 	github.com/onsi/gomega v1.15.0 // indirect
 	github.com/opencontainers/runc v1.1.0 // indirect
-	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
 	github.com/prometheus/client_golang v1.23.2 // indirect
