@@ -113,6 +113,10 @@ func Setup(ctx context.Context, core *shared.CoreCommon, opts ...DltIngressOptio
 		dltIngress.ListenerRegistry = event.NewListenerRegistry()
 	}
 
+	if dltIngress.CrossListenerRegistry == nil {
+		dltIngress.CrossListenerRegistry = event.NewListenerRegistry()
+	}
+
 	if dltIngress.EventBus == nil {
 		dltIngress.EventBus = event.NewOutboxBus(dltIngress.Repositories.EventStoreRepo, dltIngress.ListenerRegistry, []string{}, core.MetricsRegistry)
 	}
