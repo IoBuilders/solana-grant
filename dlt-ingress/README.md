@@ -9,27 +9,7 @@ dlt-ingress is a Go service that builds, signs, and submits transactions to bloc
 - Install [Go](https://go.dev/dl/)
 - (Optional) Docker for database services
 
-## Setup for Private Repositories Authentication
-
-Create a `.netrc` file in your **home directory** to automate authentication with private repositories (GitLab/GitHub). Example for GitLab:
-
-```bash
-touch ~/.netrc
-```
-
-Add your credentials:
-
-```
-machine gitlab.com
-login <username>
-password <gitlab-token>
-```
-
-Before executing `go mod tidy` its important to set the `GOPRIVATE` environment variable to `gitlab.com/iobuilders/*`.
-
-```
-export GOPRIVATE=gitlab.com/iobuilders/*
-```
+No private repository access is required to build or test this module: it only depends on public Go modules, plus `internal/vendor/iob-go-core`, a vendored copy of ioBuilders' internal application framework kept in-tree so `go build`/`go test` work without ioBuilders' GitLab.
 
 ## Overview
 

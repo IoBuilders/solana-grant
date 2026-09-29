@@ -28,8 +28,8 @@ require (
 	gorm.io/gorm v1.31.1
 )
 
-// For local lib dev
-// replace gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4 => ../iob-go-core
+// Vendored so tests can run without access to ioBuilders' private GitLab.
+replace gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4 => ./internal/vendor/iob-go-core
 
 //
 //replace gitlab.com/iobuilders/projects/eng/iob-core/iob-go-scheduler/v3 => ../iob-go-scheduler
