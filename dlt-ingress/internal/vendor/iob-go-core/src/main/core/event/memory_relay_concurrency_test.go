@@ -130,7 +130,9 @@ func TestCoreMemoryRelay_ExecutionTimeout(t *testing.T) {
 			registry.Register(dummyEventType, listener)
 
 			events := memoryEventBatch("timeout-listener", 1)
-			err := relay.Relay(context.Background(), &events)
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			err := relay.Relay(ctx, &events)
 			assert.NoError(t, err)
 
 			// relay.Wait() blocks the test goroutine, which together with the listener
@@ -140,6 +142,9 @@ func TestCoreMemoryRelay_ExecutionTimeout(t *testing.T) {
 
 			assert.Equal(t, context.DeadlineExceeded, capturedErr)
 			repo.AssertNumberOfCalls(t, "Save", 1)
+			repo.AssertCalled(t, "Save", mock.MatchedBy(func(arg context.Context) bool {
+				return arg != ctx
+			}), mock.Anything)
 		})
 	})
 

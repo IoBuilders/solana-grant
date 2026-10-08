@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -19,6 +20,7 @@ const (
 	ErrorCodeResourceNotFound coreerror.ErrorCode = "RESOURCE_NOT_FOUND"
 	ErrorCodeInvalidToken     coreerror.ErrorCode = "INVALID_TOKEN"
 	ErrorCodeTokenNotReceived coreerror.ErrorCode = "TOKEN_NOT_RECEIVED"
+	ErrorCodeTooManyRequests  coreerror.ErrorCode = "TOO_MANY_REQUESTS"
 )
 
 var (
@@ -33,11 +35,20 @@ var (
 		ErrorCodeRequestTimeout,
 		http.StatusGatewayTimeout,
 	)
+
+	ApiResponseErrorTooManyRequests *ErrorResponse = NewErrorResponse(
+		"The service is temporarily throttling requests. Retry after the time indicated in header",
+		ErrorCodeTooManyRequests,
+		http.StatusTooManyRequests,
+	)
 )
 
 func handleError(err error) *ErrorResponse {
 	if errors.Is(err, context.DeadlineExceeded) {
 		return ApiResponseErrorTimeout
+	}
+	if errors.Is(err, coreerror.ErrTooManyRequests) {
+		return ApiResponseErrorTooManyRequests
 	}
 	domErr, ok := errors.AsType[coreerror.DomainError](err)
 	if !ok {
@@ -64,8 +75,19 @@ func RespondError(c *gin.Context, err error) {
 		return
 	}
 	errResp := handleError(err)
+	setRetryAfter(c, err)
 	_ = c.Error(err)
 	c.JSON(errResp.Status, errResp)
+}
+
+func setRetryAfter(c *gin.Context, err error) {
+	retryable, ok := errors.AsType[coreerror.RetryAfterError](err)
+	if !ok {
+		return
+	}
+	if seconds := retryable.RetryAfterSeconds(); seconds > 0 {
+		c.Header("Retry-After", strconv.Itoa(seconds))
+	}
 }
 
 func RespondBindingError(c *gin.Context, err error) {

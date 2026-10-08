@@ -1,0 +1,696 @@
+openapi: 3.0.0
+info:
+  contact: {}
+  description: API for DLT Ingress - Build, sign and send transactions on any DLT
+    or Blockchain.
+  title: DLT Ingress API
+  version: 1.0.0
+paths:
+  /admin/dltingress/failures/events:
+    get:
+      description: Retrieves a paginated list of events with FAILED status.
+      operationId: get-failed-events-dltingress
+      parameters:
+        - description: Maximum number of items to return
+          example: 20
+          in: query
+          name: pageSize
+          schema:
+            type: integer
+            default: 20
+        - description: Number of items to skip
+          example: 0
+          in: query
+          name: offset
+          schema:
+            type: integer
+            default: 0
+        - description: "Field used for sorting. Default: createdAt"
+          example: createdAt
+          in: query
+          name: sortBy
+          schema:
+            type: string
+            default: createdAt
+        - description: "Sort direction (asc or desc). Default: desc"
+          example: desc
+          in: query
+          name: sortDirection
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+            default: desc
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PageResponse"
+                  - properties:
+                      data:
+                        items:
+                          $ref: "#/components/schemas/EventConsumerResponse"
+                        type: array
+                    type: object
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/api.ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/api.ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/api.ErrorResponse"
+      security:
+        - BearerAuth: []
+      summary: List failed events
+      tags:
+        - Admin
+  "/admin/dltingress/failures/events/{eventId}/retry":
+    post:
+      description: Retries a failed event that has been failed for an specific consumer.
+      operationId: retry-failed-event-dltingress
+      parameters:
+        - description: Event Id
+          in: path
+          name: eventId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/api.EmptyResponse"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/api.ErrorResponse"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/api.ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/api.ErrorResponse"
+      security:
+        - BearerAuth: []
+      summary: Retry a failed event
+      tags:
+        - Admin
+  /admin/failures/transactions:
+    get:
+      description: Retrieves a paginated list of transactions that failed in the DLT.
+      operationId: get-failed-transactions
+      parameters:
+        - description: Maximum number of items to return
+          example: 20
+          in: query
+          name: pageSize
+          schema:
+            type: integer
+            default: 20
+        - description: Number of items to skip
+          example: 0
+          in: query
+          name: offset
+          schema:
+            type: integer
+            default: 0
+        - description: "Field used for sorting. Default: createdAt"
+          example: createdAt
+          in: query
+          name: sortBy
+          schema:
+            type: string
+            default: createdAt
+        - description: "Sort direction (asc or desc). Default: desc"
+          example: desc
+          in: query
+          name: sortDirection
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+            default: desc
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PageResponse"
+                  - properties:
+                      data:
+                        items:
+                          $ref: "#/components/schemas/FailedTransactionResponse"
+                        type: array
+                    type: object
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/api.ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/api.ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/api.ErrorResponse"
+      security:
+        - BearerAuth: []
+      summary: List failed transactions
+      tags:
+        - Admin
+  "/admin/networks/{networkId}/faucet-wallet":
+    get:
+      description: Retrieves the faucet wallet for the given network, including its
+        current on-chain balance.
+      operationId: get-faucet-wallet
+      parameters:
+        - description: Network ID
+          in: path
+          name: networkId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FaucetWalletBalance"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/api.ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/api.ErrorResponse"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/api.ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/api.ErrorResponse"
+      security:
+        - BearerAuth: []
+      summary: Get a faucet wallet
+      tags:
+        - Admin
+    post:
+      description: >-
+        Creates a custody key and a faucet wallet for the given network.
+
+
+        fundingAmount and balanceThreshold are expressed in the network's smallest native unit (e.g. wei for EVM networks).
+      operationId: create-faucet-wallet
+      parameters:
+        - description: Network ID
+          in: path
+          name: networkId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateFaucetWalletRequest"
+        description: Create faucet wallet request
+        required: true
+      responses:
+        "200":
+          description: Faucet wallet created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FaucetWallet"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/api.ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/api.ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/api.ErrorResponse"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/api.ErrorResponse"
+        "409":
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/api.ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/api.ErrorResponse"
+      security:
+        - BearerAuth: []
+      summary: Create a faucet wallet
+      tags:
+        - Admin
+    put:
+      description: >-
+        Updates the funding amount and balance threshold of the faucet wallet
+        for the given network.
+
+
+        fundingAmount and balanceThreshold are expressed in the network's smallest native unit (e.g. wei for EVM networks). enabled toggles whether the faucet wallet is used to fund accounts.
+      operationId: update-faucet-wallet
+      parameters:
+        - description: Network ID
+          in: path
+          name: networkId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateFaucetWalletRequest"
+        description: Update faucet wallet request
+        required: true
+      responses:
+        "200":
+          description: Faucet wallet updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FaucetWallet"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/api.ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/api.ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/api.ErrorResponse"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/api.ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/api.ErrorResponse"
+      security:
+        - BearerAuth: []
+      summary: Update a faucet wallet
+      tags:
+        - Admin
+  /admin/transactions/evm/retry:
+    post:
+      description: >-
+        Retries a previously submitted transaction that is stored in the system
+        and has not been executed yet on the target DLT.
+
+
+        The request must include the hash of the original transaction.
+
+
+        Fee parameters are optional:
+
+        - For legacy transactions (type 0), `gasPrice` may be provided.
+
+        - For EIP-1559 transactions (type 2), `maxPriorityFeePerGas` may be provided.
+
+        - If a fee field is omitted, the value from the original transaction is reused.
+
+        - If `useMultiplier=true`, the system applies the configured retry multiplier to the fee values.
+
+
+        The nonce is also optional. If omitted, the current address nonce is retrieved.
+      operationId: retry-transaction
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RetryTransactionRequest"
+        description: Retry transaction request
+        required: true
+      responses:
+        "200":
+          description: Retry transaction accepted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RetriedTransaction"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/api.ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/api.ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/api.ErrorResponse"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/api.ErrorResponse"
+        "409":
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/api.ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/api.ErrorResponse"
+      security:
+        - BearerAuth: []
+      summary: Retry an existing transaction
+      tags:
+        - Admin
+  /admin/transactions/svm/retry:
+    post:
+      description: >-
+        Retries a previously submitted Solana transaction that is stored in the
+        system and has not landed on-chain yet.
+
+
+        The request must include the signature of the original transaction. A fresh blockhash is always
+
+        fetched and the transaction re-signed; the rest of the instructions are carried over unchanged.
+
+
+        Compute unit parameters are optional:
+
+        - `cuLimit` overrides the compute unit limit. If omitted, the original transaction's value is reused.
+
+        - `cuPrice` overrides the compute unit price (priority fee). If omitted, the original value is reused.
+
+        - If `useMultiplier=true`, the system applies the configured retry multiplier to the original compute unit price.
+      operationId: retry-svm-transaction
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RetrySvmTransactionRequest"
+        description: Retry SVM transaction request
+        required: true
+      responses:
+        "200":
+          description: Retry transaction accepted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RetriedTransaction"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/api.ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/api.ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/api.ErrorResponse"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/api.ErrorResponse"
+        "409":
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/api.ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/api.ErrorResponse"
+      security:
+        - BearerAuth: []
+      summary: Retry an existing SVM transaction
+      tags:
+        - Admin
+servers:
+  - url: //localhost:8080/api/v1
+components:
+  securitySchemes:
+    BearerAuth:
+      in: header
+      name: Authorization
+      type: apiKey
+  schemas:
+    CreateFaucetWalletRequest:
+      type: object
+    EventConsumerResponse:
+      properties:
+        ErrorDetails:
+          example: Account already exists
+          type: string
+        consumer:
+          example: usercreated.Listener
+          type: string
+        createdAt:
+          example: 2026-01-01T10:00:00Z
+          format: date-time
+          type: string
+        id:
+          example: f4585827-0aa5-444c-a995-de62b5f5ac34
+          format: uuid
+          type: string
+        payload:
+          example: '{"id":"af764b3b-1a72-4d4a-a538-f29bf13c4b4f"}'
+          type: string
+        type:
+          example: account.CreatedEvent
+          type: string
+      type: object
+    FailedTransactionResponse:
+      properties:
+        ErrorDetails:
+          type: string
+        createdAt:
+          example: 2026-01-01T10:00:00Z
+          format: date-time
+          type: string
+        networkId:
+          example: default
+          type: string
+        txId:
+          example: 0xb5c8bd9430b6cc87a0e2fe110ece6bf527fa4f170a4bc8cd032f768fc5219838''
+          type: string
+      type: object
+    FaucetWallet:
+      properties:
+        balanceThreshold:
+          description: BalanceThreshold is expressed in the network's smallest native unit
+            (e.g. wei for EVM networks).
+          example: "100000000000000000"
+          format: decimal
+          type: string
+        dltAccountId:
+          example: 0x8f6c...9a2b
+          type: string
+        enabled:
+          example: true
+          type: boolean
+        fundingAmount:
+          description: FundingAmount is expressed in the network's smallest native unit
+            (e.g. wei for EVM networks).
+          example: "1000000000000000000"
+          format: decimal
+          type: string
+        id:
+          example: 9e2e6b8a-6b39-4d3a-9f0a-1a2b3c4d5e6f
+          type: string
+        networkId:
+          example: ethereum-sepolia
+          type: string
+      type: object
+    FaucetWalletBalance:
+      properties:
+        balance:
+          description: Balance is the current on-chain balance, expressed in the network's
+            smallest native unit (e.g. wei for EVM networks).
+          example: "500000000000000000"
+          format: decimal
+          type: string
+        balanceThreshold:
+          description: BalanceThreshold is expressed in the network's smallest native unit
+            (e.g. wei for EVM networks).
+          example: "100000000000000000"
+          format: decimal
+          type: string
+        dltAccountId:
+          example: 0x8f6c...9a2b
+          type: string
+        enabled:
+          example: true
+          type: boolean
+        fundingAmount:
+          description: FundingAmount is expressed in the network's smallest native unit
+            (e.g. wei for EVM networks).
+          example: "1000000000000000000"
+          format: decimal
+          type: string
+        id:
+          example: 9e2e6b8a-6b39-4d3a-9f0a-1a2b3c4d5e6f
+          type: string
+        networkId:
+          example: ethereum-sepolia
+          type: string
+      type: object
+    Page:
+      properties:
+        page:
+          description: Current page index (starting from 0)
+          example: 0
+          type: integer
+        size:
+          description: Number of items returned in the current page
+          example: 20
+          type: integer
+        totalElements:
+          description: Total number of elements matching the query
+          example: 93
+          type: integer
+        totalPages:
+          description: Total number of available pages
+          example: 5
+          type: integer
+      type: object
+    PageResponse:
+      properties:
+        data:
+          description: List of items returned in the current page
+        page:
+          allOf:
+            - $ref: "#/components/schemas/Page"
+          description: Pagination metadata
+      type: object
+    RetriedTransaction:
+      properties:
+        newTxHash:
+          description: >-
+            Hash of the newly submitted transaction to the DLT.
+
+            This value changes if any parameter (e.g., gas price, nonce) is modified.
+          example: 0xa1b2c3d4e5f607...
+          type: string
+      type: object
+    RetrySvmTransactionRequest:
+      type: object
+    RetryTransactionRequest:
+      type: object
+    UpdateFaucetWalletRequest:
+      type: object
+    amount.Amount:
+      type: object
+    api.EmptyResponse:
+      additionalProperties: {}
+      type: object
+    api.ErrorResponse:
+      properties:
+        code:
+          type: string
+        error:
+          type: string
+        status:
+          type: integer
+      type: object

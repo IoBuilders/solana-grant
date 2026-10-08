@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/error/coreerror"
 	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/logger"
 )
 
@@ -40,10 +41,11 @@ func (r CustomRetryer) Execute(ctx context.Context, opts Options, fn func(ctx co
 			break
 		}
 
-		logger.DebugWithCtx(ctx, fmt.Sprintf("attempt %d failed. Error was: %s. Retrying in %v seconds...", i+1, err, currentDelay))
+		wait := nextWait(opts, currentDelay, err)
+		logger.DebugWithCtx(ctx, fmt.Sprintf("attempt %d failed. Error was: %s. Retrying in %v seconds...", i+1, err, wait))
 
 		select {
-		case <-time.After(currentDelay):
+		case <-time.After(wait):
 		case <-ctx.Done():
 			return nil, ctx.Err()
 		}
@@ -59,7 +61,26 @@ func (r CustomRetryer) Execute(ctx context.Context, opts Options, fn func(ctx co
 	return nil, err
 }
 
+func nextWait(opts Options, currentDelay time.Duration, err error) time.Duration {
+	retryAfterErr, ok := errors.AsType[coreerror.RetryAfterError](err)
+	if !ok {
+		return currentDelay
+	}
+	retryAfter := time.Duration(retryAfterErr.RetryAfterSeconds()) * time.Second
+	if opts.maxDelay > 0 && retryAfter > opts.maxDelay {
+		retryAfter = opts.maxDelay
+	}
+	return max(currentDelay, retryAfter)
+}
+
 func shouldExcludeError(opts Options, err error) bool {
+	var nonRetryable NonRetryableError
+	if errors.As(err, &nonRetryable) {
+		return true
+	}
+	if _, ok := errors.AsType[coreerror.RetryAfterError](err); ok {
+		return false
+	}
 	for _, e := range opts.exclude {
 		if errors.Is(err, e) {
 			return true

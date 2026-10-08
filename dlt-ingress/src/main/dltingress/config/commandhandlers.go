@@ -1,19 +1,22 @@
 package dltingressconfig
 
 import (
-	"dlt-ingress/src/main/dltingress/app/command/buildtransaction"
-	"dlt-ingress/src/main/dltingress/app/command/createkey"
-	"dlt-ingress/src/main/dltingress/app/command/retrytransaction"
-	"dlt-ingress/src/main/dltingress/app/command/savefailedtransaction"
-	"dlt-ingress/src/main/dltingress/app/command/signandsend"
-	"dlt-ingress/src/main/dltingress/app/command/transitfailedtransactiontoretried"
-	"dlt-ingress/src/main/dltingress/port/boundedblockingqueue"
-	"dlt-ingress/src/main/dltingress/port/custody"
-	"dlt-ingress/src/main/dltingress/port/evm"
-	"dlt-ingress/src/main/dltingress/port/nonceprovider"
-	"dlt-ingress/src/main/dltingress/port/repository"
-	"dlt-ingress/src/main/dltingress/port/transactiongasestimator"
-	"dlt-ingress/src/main/dltingress/port/transanctionsender"
+	"dlt-ingress/src/main/dltingress/internal/app/command/buildtransaction"
+	"dlt-ingress/src/main/dltingress/internal/app/command/createfaucetwallet"
+	"dlt-ingress/src/main/dltingress/internal/app/command/createkey"
+	"dlt-ingress/src/main/dltingress/internal/app/command/retryevmtransaction"
+	"dlt-ingress/src/main/dltingress/internal/app/command/retrysvmtransaction"
+	"dlt-ingress/src/main/dltingress/internal/app/command/savefailedtransaction"
+	"dlt-ingress/src/main/dltingress/internal/app/command/signandsend"
+	"dlt-ingress/src/main/dltingress/internal/app/command/transitfailedtransactiontoretried"
+	"dlt-ingress/src/main/dltingress/internal/app/command/updatefaucetwallet"
+	"dlt-ingress/src/main/dltingress/internal/infra/boundedblockingqueue"
+	"dlt-ingress/src/main/dltingress/internal/infra/custody"
+	"dlt-ingress/src/main/dltingress/internal/infra/evm"
+	"dlt-ingress/src/main/dltingress/internal/infra/nonceprovider"
+	"dlt-ingress/src/main/dltingress/internal/infra/svm"
+	"dlt-ingress/src/main/dltingress/internal/infra/transactiongasestimator"
+	"dlt-ingress/src/main/dltingress/internal/infra/transanctionsender"
 
 	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/app/command/transitfailedeventconsumertopending"
 	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/event"
@@ -21,7 +24,7 @@ import (
 )
 
 type CommandHandlerDeps struct {
-	Repositories                     *repository.DltIngressRepositories
+	Repositories                     *DltIngressRepositories
 	CustodyProvider                  custody.Port
 	EventBus                         event.Bus
 	DomainServices                   *DomainServices
@@ -30,6 +33,7 @@ type CommandHandlerDeps struct {
 	TransactionGasEstimationRegistry transactiongasestimator.Registry
 	BoundedBlockingQueue             boundedblockingqueue.Port
 	EvmClientRegistry                evm.ClientRegistry
+	SvmClientRegistry                svm.ClientRegistry
 	AppServices                      *AppServices
 	MetricsRegistry                  *metrics.Registry
 }
@@ -37,6 +41,8 @@ type CommandHandlerDeps struct {
 func InitCommandHandlers(deps CommandHandlerDeps) []interface{} {
 	return []interface{}{
 		createkey.NewCommandHandler(deps.Repositories.CustodyKeyRepo, deps.CustodyProvider, deps.EventBus),
+		createfaucetwallet.NewCommandHandler(deps.Repositories.FaucetWalletRepo, deps.Repositories.CustodyKeyRepo, deps.CustodyProvider, deps.EventBus),
+		updatefaucetwallet.NewCommandHandler(deps.Repositories.FaucetWalletRepo, deps.EventBus),
 		signandsend.NewCommandHandlerMetrics(deps.MetricsRegistry, signandsend.NewCommandHandler(
 			deps.EventBus,
 			&deps.AppServices.TxService,
@@ -49,7 +55,7 @@ func InitCommandHandlers(deps CommandHandlerDeps) []interface{} {
 			deps.Repositories.SvmTransactionRepo,
 		)),
 		buildtransaction.NewCommandHandler(&deps.AppServices.TxService),
-		retrytransaction.NewCommandHandler(
+		retryevmtransaction.NewCommandHandler(
 			deps.EventBus,
 			deps.CustodyProvider,
 			deps.NonceProvider,
@@ -58,6 +64,15 @@ func InitCommandHandlers(deps CommandHandlerDeps) []interface{} {
 			deps.EvmClientRegistry,
 			deps.BoundedBlockingQueue,
 			&deps.DomainServices.CustodyKeyExistsService,
+		),
+		retrysvmtransaction.NewCommandHandler(
+			deps.EventBus,
+			deps.CustodyProvider,
+			deps.SvmClientRegistry,
+			deps.TransactionSenderRegistry,
+			deps.Repositories.SvmTransactionRepo,
+			deps.BoundedBlockingQueue,
+			&deps.DomainServices.CustodyKeyExistMultipleService,
 		),
 		transitfailedeventconsumertopending.NewHandler(deps.EventBus, deps.Repositories.EventConsumerRepo),
 		transitfailedtransactiontoretried.NewHandler(deps.EventBus, deps.Repositories.FailedTransactionRepo),

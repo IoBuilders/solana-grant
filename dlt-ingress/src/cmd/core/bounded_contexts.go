@@ -1,5 +1,7 @@
 package cmdcore
 
+import "strings"
+
 type BoundedContext string
 
 const (
@@ -17,7 +19,34 @@ var HANDLER_GEN_BCS = []string{
 	DLT_INGRESS,
 }
 
-var MIGRATED_BCS = map[string]bool{}
+var OPENAPI_TAGS = map[string]string{
+	DLT_INGRESS: "DLT Ingress",
+}
+
+// API_SEGMENTS is the first path segment each bounded context serves its endpoints under, for the
+// contexts whose package name and public segment differ.
+var API_SEGMENTS = map[string]string{}
+
+func ApiSegment(bc string) string {
+	if segment, found := API_SEGMENTS[bc]; found {
+		return segment
+	}
+	return bc
+}
+
+func OpenApiTag(bc string) string {
+	if tag, found := OPENAPI_TAGS[bc]; found {
+		return tag
+	}
+	if bc == "" {
+		return bc
+	}
+	return strings.ToUpper(bc[:1]) + bc[1:]
+}
+
+var MIGRATED_BCS = map[string]bool{
+	DLT_INGRESS: true,
+}
 
 var DISABLED_BCS = map[string]bool{}
 

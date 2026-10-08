@@ -7,17 +7,23 @@ import (
 type ErrorCode string
 
 var (
-	ErrNotFound     = errors.New("not found")
-	ErrValidation   = errors.New("validation error")
-	ErrConflict     = errors.New("conflict")
-	ErrUnauthorized = errors.New("unauthorized")
-	ErrForbidden    = errors.New("forbidden")
+	ErrNotFound        = errors.New("not found")
+	ErrValidation      = errors.New("validation error")
+	ErrConflict        = errors.New("conflict")
+	ErrUnauthorized    = errors.New("unauthorized")
+	ErrForbidden       = errors.New("forbidden")
+	ErrTooManyRequests = errors.New("too many requests")
 )
 
 type DomainError interface {
 	error
 	Unwrap() error
 	ErrorCode() ErrorCode
+}
+
+type RetryAfterError interface {
+	error
+	RetryAfterSeconds() int
 }
 
 type domainError struct {

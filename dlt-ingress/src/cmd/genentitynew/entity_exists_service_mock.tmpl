@@ -4,8 +4,8 @@ package mockservice{{ ToLower .Entity }}
 
 import (
 	"context"
-	"dlt-ingress/src/main/{{ ToLower .BoundedContext }}/internal/domain/{{ ToLower .ExtraPath }}{{ .FolderName }}"
-	service{{ ToLower .Entity }} "dlt-ingress/src/main/{{ ToLower .BoundedContext }}/internal/domain/{{ ToLower .ExtraPath }}{{ .FolderName }}/service"
+	"asseto-engine-api/src/main/{{ ToLower .BoundedContext }}/internal/domain/{{ ToLower .ExtraPath }}{{ .FolderName }}"
+	service{{ ToLower .Entity }} "asseto-engine-api/src/main/{{ ToLower .BoundedContext }}/internal/domain/{{ ToLower .ExtraPath }}{{ .FolderName }}/service"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"

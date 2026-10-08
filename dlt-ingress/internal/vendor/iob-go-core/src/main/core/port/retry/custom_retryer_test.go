@@ -325,6 +325,37 @@ func TestCoreRetryer_Exclude_Wrapped_Sentinel_Error(t *testing.T) {
 	assert.Less(t, elapsed.Seconds(), 1.0)
 }
 
+func TestCoreRetryer_Exclude_NonRetryable_Error(t *testing.T) {
+	attempts = 0
+	successOnAttempt = 0
+	errorToReturn = NewNonRetryableError(defaultError)
+	opts := NewOptions(
+		WithDelay(1*time.Second),
+		WithMaxAttempts(3),
+		WithMultiplier(2),
+	)
+
+	start := time.Now()
+	returnedAttempts, err := retryer.Execute(context.Background(), opts, functionToRetry)
+	elapsed := time.Since(start)
+
+	assert.Equal(t, attempts, 1)
+	assert.Nil(t, returnedAttempts)
+	assert.Equal(t, err, errorToReturn)
+	assert.Equal(t, err.Error(), defaultError.Error())
+	assert.Less(t, elapsed.Seconds(), 1.0)
+}
+
+func TestNewNonRetryableError_Nil(t *testing.T) {
+	assert.Nil(t, NewNonRetryableError(nil))
+}
+
+func TestNewNonRetryableError_Unwraps(t *testing.T) {
+	wrapped := NewNonRetryableError(defaultError)
+
+	assert.True(t, errors.Is(wrapped, defaultError))
+}
+
 func TestCoreRetryer_Execute_Failed_Attempt_Func(t *testing.T) {
 	attempts = 0         // Reset number of attempts
 	successOnAttempt = 0 // To force to fail in all attempts
@@ -395,4 +426,87 @@ func TestCoreRetryer_Error_On_Failed_Attempt_Func(t *testing.T) {
 	assert.Equal(t, attempts, successOnAttempt)
 	assert.Equal(t, returnedAttempts, successOnAttempt)
 	assert.Nil(t, err)
+}
+
+type retryAfterTestError struct{ seconds int }
+
+func (e retryAfterTestError) Error() string          { return "retry after test error" }
+func (e retryAfterTestError) RetryAfterSeconds() int { return e.seconds }
+
+func TestCoreRetryer_Waits_RetryAfter(t *testing.T) {
+	attempts = 0
+	successOnAttempt = 2
+	errorToReturn = fmt.Errorf("wrapped: %w", retryAfterTestError{seconds: 2})
+	opts := NewOptions(WithDelay(1*time.Second), WithMaxDelay(5*time.Second), WithMaxAttempts(2))
+
+	start := time.Now()
+	_, err := retryer.Execute(context.Background(), opts, functionToRetry)
+
+	assert.Nil(t, err)
+	assert.GreaterOrEqual(t, time.Since(start).Seconds(), 2.0)
+}
+
+func TestCoreRetryer_Caps_RetryAfter_At_Max_Delay(t *testing.T) {
+	attempts = 0
+	successOnAttempt = 2
+	errorToReturn = retryAfterTestError{seconds: 3600}
+	opts := NewOptions(WithDelay(1*time.Second), WithMaxDelay(1*time.Second), WithMaxAttempts(2))
+
+	start := time.Now()
+	_, err := retryer.Execute(context.Background(), opts, functionToRetry)
+
+	assert.Nil(t, err)
+	assert.Less(t, time.Since(start).Seconds(), 2.0)
+}
+
+func TestCoreRetryer_Keeps_Backoff_When_RetryAfter_Is_Shorter(t *testing.T) {
+	attempts = 0
+	successOnAttempt = 2
+	errorToReturn = retryAfterTestError{seconds: 0}
+	opts := NewOptions(WithDelay(2*time.Second), WithMaxAttempts(2))
+
+	start := time.Now()
+	_, err := retryer.Execute(context.Background(), opts, functionToRetry)
+
+	assert.Nil(t, err)
+	assert.GreaterOrEqual(t, time.Since(start).Seconds(), 2.0)
+}
+
+func TestCoreRetryer_Retries_RetryAfter_Despite_Exclude_Logic(t *testing.T) {
+	attempts = 0
+	successOnAttempt = 2
+	errorToReturn = fmt.Errorf("wrapped: %w", retryAfterTestError{seconds: 0})
+	opts := NewOptions(WithDelay(1*time.Second), WithMaxAttempts(2), WithExcludeLogic(func(err error) bool {
+		return true
+	}))
+
+	_, err := retryer.Execute(context.Background(), opts, functionToRetry)
+
+	assert.Nil(t, err)
+	assert.Equal(t, 2, attempts)
+}
+
+func TestCoreRetryer_Retries_RetryAfter_Despite_Exclude(t *testing.T) {
+	attempts = 0
+	successOnAttempt = 2
+	retryAfterErr := retryAfterTestError{seconds: 0}
+	errorToReturn = retryAfterErr
+	opts := NewOptions(WithDelay(1*time.Second), WithMaxAttempts(2), WithExclude([]error{retryAfterErr}))
+
+	_, err := retryer.Execute(context.Background(), opts, functionToRetry)
+
+	assert.Nil(t, err)
+	assert.Equal(t, 2, attempts)
+}
+
+func TestCoreRetryer_Does_Not_Retry_NonRetryable_RetryAfter(t *testing.T) {
+	attempts = 0
+	successOnAttempt = 2
+	errorToReturn = NewNonRetryableError(retryAfterTestError{seconds: 0})
+	opts := NewOptions(WithDelay(1*time.Second), WithMaxAttempts(2))
+
+	_, err := retryer.Execute(context.Background(), opts, functionToRetry)
+
+	assert.ErrorIs(t, err, errorToReturn)
+	assert.Equal(t, 1, attempts)
 }

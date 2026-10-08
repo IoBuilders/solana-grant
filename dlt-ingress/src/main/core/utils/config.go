@@ -2,32 +2,11 @@ package utils
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"reflect"
 
 	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/command"
-	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/logger"
 	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/query"
 )
-
-func FindProjectRoot() string {
-	dir, err := os.Getwd()
-	if err != nil {
-		return ""
-	}
-	for {
-		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
-			return dir
-		}
-		parent := filepath.Dir(dir)
-		if parent == dir {
-			logger.Error("go.mod was not found; project root cannot be determined")
-			os.Exit(1)
-		}
-		dir = parent
-	}
-}
 
 func RegisterCommandHandlers(commandBus command.Bus, handlers []interface{}) {
 	for _, h := range handlers {

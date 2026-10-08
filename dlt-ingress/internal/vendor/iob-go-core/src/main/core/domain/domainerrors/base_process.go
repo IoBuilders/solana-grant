@@ -19,3 +19,10 @@ func NewBaseProcessNotFoundDomainError(id uuid.UUID) error {
 func NewBaseProcessNotFoundByTxHashDomainError(txHash string) error {
 	return coreerror.NewNotFoundDomainError(ErrorCodeBaseProcessNotFoundByTxHash, fmt.Sprintf("BaseProcess with transaction hash %s not found", txHash))
 }
+
+const ErrorCodeProcessTypeNotRetryable coreerror.ErrorCode = "PROCESS_TYPE_NOT_RETRYABLE"
+
+func NewProcessTypeNotRetryableDomainError(processType string) error {
+	return coreerror.NewConflictDomainError(ErrorCodeProcessTypeNotRetryable,
+		fmt.Sprintf("Process type %s has no retry entry point registered in this bounded context", processType))
+}

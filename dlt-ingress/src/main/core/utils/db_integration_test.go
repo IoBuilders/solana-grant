@@ -16,8 +16,7 @@ import (
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
-
-	"dlt-ingress/src/main/config"
+	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/config"
 )
 
 // testDBURL is populated by TestMain with a real PostgreSQL DSN.
@@ -112,7 +111,7 @@ func TestNewPostgresDB_ConnectTimeout_IsEnforced(t *testing.T) {
 		}
 	})
 
-	cfg := &config.DatabaseConfig{
+	cfg := &coreconfig.DatabaseConfig{
 		Url:            fmt.Sprintf("postgres://testuser:testpass@%s/testdb?sslmode=disable", listener.Addr()),
 		ConnectTimeout: 2 * time.Second,
 	}
@@ -152,7 +151,7 @@ func TestNewPostgresDB_ConnectTimeout_IsEnforced(t *testing.T) {
 func TestNewPostgresDB_StatementTimeout_IsEnforced(t *testing.T) {
 	requireDB(t)
 
-	cfg := &config.DatabaseConfig{
+	cfg := &coreconfig.DatabaseConfig{
 		Url:                testDBURL,
 		StatementTimeout:   2 * time.Second,
 		MaxOpenConnections: 5,
@@ -195,7 +194,7 @@ func TestNewPostgresDB_StatementTimeout_IsEnforced(t *testing.T) {
 func TestNewPostgresDB_LockTimeout_IsEnforced(t *testing.T) {
 	requireDB(t)
 
-	cfg := &config.DatabaseConfig{
+	cfg := &coreconfig.DatabaseConfig{
 		Url:                testDBURL,
 		LockTimeout:        2 * time.Second,
 		MaxOpenConnections: 10,
@@ -300,7 +299,7 @@ func TestNewPostgresDB_LockTimeout_IsEnforced(t *testing.T) {
 func TestNewPostgresDB_IdleInTransactionSessionTimeout_IsEnforced(t *testing.T) {
 	requireDB(t)
 
-	cfg := &config.DatabaseConfig{
+	cfg := &coreconfig.DatabaseConfig{
 		Url:                             testDBURL,
 		IdleInTransactionSessionTimeout: 2 * time.Second,
 		MaxOpenConnections:              5,
@@ -354,7 +353,7 @@ func TestNewPostgresDB_ConnectionPool_IsConfigured(t *testing.T) {
 		maxIdle = 3
 	)
 
-	cfg := &config.DatabaseConfig{
+	cfg := &coreconfig.DatabaseConfig{
 		Url:                testDBURL,
 		MaxOpenConnections: maxOpen,
 		MaxIdleConnections: maxIdle,

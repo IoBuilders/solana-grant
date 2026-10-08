@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/config"
 	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/event"
 	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/port/retry"
 )
@@ -21,15 +22,15 @@ type RegistrableListener interface {
 type ListenerRegistrar struct {
 	registry       *event.ListenerRegistry
 	retryer        retry.Retryer
-	bcConfig       *config.BcRetryableListenerConfig
-	listenerConfig *config.BcListenerConfig
+	bcConfig       *coreconfig.BcRetryableListenerConfig
+	listenerConfig *coreconfig.BcListenerConfig
 }
 
 func NewListenerRegistrar(
 	registry *event.ListenerRegistry,
 	retryer retry.Retryer,
-	bcConfig *config.BcRetryableListenerConfig,
-	listenerConfig *config.BcListenerConfig,
+	bcConfig *coreconfig.BcRetryableListenerConfig,
+	listenerConfig *coreconfig.BcListenerConfig,
 ) *ListenerRegistrar {
 	return &ListenerRegistrar{registry, retryer, bcConfig, listenerConfig}
 }
@@ -65,9 +66,9 @@ func (r *ListenerRegistrar) RegisterOrder(l RegistrableListener) {
 // concurrency/executionTimeout values (set once for every such listener across all bounded contexts),
 // taking priority over any per-listener or BC config.
 func (r *ListenerRegistrar) RegisterLockTimeoutRetryable(l RegistrableListener) {
-	var lockRetryDefaults config.ListenerConfigLockTimeoutRetryDefaults
-	if config.AppConfig != nil {
-		lockRetryDefaults = config.AppConfig.ListenerConfig.Defaults.LockTimeoutRetryable
+	var lockRetryDefaults coreconfig.ListenerConfigLockTimeoutRetryDefaults
+	if config.DltIngressConfig != nil {
+		lockRetryDefaults = config.DltIngressConfig.ListenerConfig.Defaults.LockTimeoutRetryable
 	}
 	r.registry.Register(
 		l.EventType(),

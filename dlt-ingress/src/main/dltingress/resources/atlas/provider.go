@@ -3,13 +3,14 @@
 package main
 
 import (
-	"dlt-ingress/src/main/dltingress/domain/custodykey"
-	"dlt-ingress/src/main/dltingress/domain/nonce"
-	"dlt-ingress/src/main/dltingress/domain/queuelock"
-	"dlt-ingress/src/main/dltingress/domain/transaction/evmtransaction"
-	"dlt-ingress/src/main/dltingress/domain/transaction/failedtransaction"
-	"dlt-ingress/src/main/dltingress/domain/transaction/svmtransaction"
-	"dlt-ingress/src/main/dltingress/domain/txqueueslot"
+	"dlt-ingress/src/main/dltingress/internal/infra/repository/custodykey"
+	"dlt-ingress/src/main/dltingress/internal/infra/repository/faucetwallet"
+	"dlt-ingress/src/main/dltingress/internal/infra/repository/nonce"
+	"dlt-ingress/src/main/dltingress/internal/infra/repository/queuelock"
+	"dlt-ingress/src/main/dltingress/internal/infra/repository/transaction/evmtransaction"
+	"dlt-ingress/src/main/dltingress/internal/infra/repository/transaction/failedtransaction"
+	"dlt-ingress/src/main/dltingress/internal/infra/repository/transaction/svmtransaction"
+	"dlt-ingress/src/main/dltingress/internal/infra/repository/txqueueslot"
 	"fmt"
 
 	"ariga.io/atlas-provider-gorm/gormschema"
@@ -28,15 +29,16 @@ func main() {
 
 func Models() []any {
 	models := []any{
-		&custodykey.CustodyKey{},
+		&custodykeyrepo.CustodyKey{},
+		&faucetwalletrepo.FaucetWallet{},
 		&eventstore.EventConsumer{},
 		&eventstore.EventStore{},
-		&nonce.Nonce{},
-		&evmtransaction.EvmTransaction{},
-		&svmtransaction.SvmTransaction{},
-		&queuelock.QueueLock{},
-		&txqueueslot.TxQueueSlot{},
-		&failedtransaction.FailedTransaction{},
+		&noncerepo.Nonce{},
+		&evmtransactionrepo.EvmTransaction{},
+		&svmtransactionrepo.SvmTransaction{},
+		&queuelockrepo.QueueLock{},
+		&txqueueslotrepo.TxQueueSlot{},
+		&failedtransactionrepo.FailedTransaction{},
 	}
 	return models
 }

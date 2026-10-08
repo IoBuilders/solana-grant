@@ -1,8 +1,7 @@
 package dltingressconfig
 
 import (
-	"dlt-ingress/src/main/dltingress/domain/custodykey/service"
-	"dlt-ingress/src/main/dltingress/port/repository"
+	"dlt-ingress/src/main/dltingress/internal/domain/custodykey/service"
 )
 
 type DomainServices struct {
@@ -11,7 +10,7 @@ type DomainServices struct {
 }
 
 func SetupDomainServices(
-	repositories *repository.DltIngressRepositories,
+	repositories *DltIngressRepositories,
 ) *DomainServices {
 	return &DomainServices{
 		CustodyKeyExistsService:        *servicecustodykey.NewExists(repositories.CustodyKeyRepo),
