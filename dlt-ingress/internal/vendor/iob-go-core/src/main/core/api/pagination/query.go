@@ -1,6 +1,7 @@
 package pagination
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 	"unicode"
@@ -63,6 +64,9 @@ func GetPaginationParams(c *gin.Context) (PaginationParams, error) {
 		if err != nil {
 			return params, err
 		}
+		if parsedLimit <= 0 {
+			return params, fmt.Errorf("size must be greater than 0, got %d", parsedLimit)
+		}
 		params.PageSize = parsedLimit
 	}
 
@@ -70,6 +74,9 @@ func GetPaginationParams(c *gin.Context) (PaginationParams, error) {
 		parsedPage, err := strconv.Atoi(pageStr)
 		if err != nil {
 			return params, err
+		}
+		if parsedPage < 0 {
+			return params, fmt.Errorf("page must not be negative, got %d", parsedPage)
 		}
 		params.Offset = params.PageSize * parsedPage
 	}

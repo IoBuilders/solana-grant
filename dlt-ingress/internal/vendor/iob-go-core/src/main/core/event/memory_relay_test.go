@@ -239,6 +239,141 @@ func TestCoreMemoryRelay_Relay(t *testing.T) {
 		}))
 	})
 
+	t.Run("Fail listener execution without retrying and update consumer status to Failed for a 4xx HTTP response", func(t *testing.T) {
+		attempts := 0
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			attempts++
+			w.WriteHeader(http.StatusNotFound)
+		}))
+		defer server.Close()
+		registry := NewListenerRegistry()
+		registry.RegisterType("DummyEvent", &DummyEvent{})
+
+		repo := new(eventstorerepo.EventConsumerRepositoryMock)
+		relay := NewMemoryRelay(registry, repo, dummyTracer, retryer, retryOptions, metricsRegistry)
+
+		event := DummyEvent{
+			BaseEvent: *NewBaseEvent(),
+			Message:   "fail",
+		}
+
+		registerHelper(registry, dummyEventType)
+
+		payload, _ := json.Marshal(event)
+		eventStore := eventstore.EventStore{
+			Type:            "DummyEvent",
+			Payload:         datatypes.JSON(payload),
+			PublicationType: eventstore.HTTP,
+			EventConsumers: []eventstore.EventConsumer{
+				{
+					Type:   server.URL,
+					Status: eventstore.Pending,
+				},
+			},
+		}
+
+		repo.On("Save", mock.Anything, mock.Anything).Return(nil)
+
+		err := relay.Relay(context.Background(), &[]eventstore.EventStore{eventStore})
+
+		time.Sleep(200 * time.Millisecond)
+		assert.NoError(t, err)
+		assert.Equal(t, 1, attempts)
+		repo.AssertCalled(t, "Save", mock.Anything, mock.MatchedBy(func(ec *eventstore.EventConsumer) bool {
+			return ec.Status == eventstore.Failed && strings.Contains(*ec.ErrorDetails, "Status Code 404")
+		}))
+	})
+
+	t.Run("Fail listener execution without retrying for the upper bound of the 4xx range", func(t *testing.T) {
+		attempts := 0
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			attempts++
+			w.WriteHeader(499)
+		}))
+		defer server.Close()
+		registry := NewListenerRegistry()
+		registry.RegisterType("DummyEvent", &DummyEvent{})
+
+		repo := new(eventstorerepo.EventConsumerRepositoryMock)
+		relay := NewMemoryRelay(registry, repo, dummyTracer, retryer, retryOptions, metricsRegistry)
+
+		event := DummyEvent{
+			BaseEvent: *NewBaseEvent(),
+			Message:   "fail",
+		}
+
+		registerHelper(registry, dummyEventType)
+
+		payload, _ := json.Marshal(event)
+		eventStore := eventstore.EventStore{
+			Type:            "DummyEvent",
+			Payload:         datatypes.JSON(payload),
+			PublicationType: eventstore.HTTP,
+			EventConsumers: []eventstore.EventConsumer{
+				{
+					Type:   server.URL,
+					Status: eventstore.Pending,
+				},
+			},
+		}
+
+		repo.On("Save", mock.Anything, mock.Anything).Return(nil)
+
+		err := relay.Relay(context.Background(), &[]eventstore.EventStore{eventStore})
+
+		time.Sleep(200 * time.Millisecond)
+		assert.NoError(t, err)
+		assert.Equal(t, 1, attempts)
+		repo.AssertCalled(t, "Save", mock.Anything, mock.MatchedBy(func(ec *eventstore.EventConsumer) bool {
+			return ec.Status == eventstore.Failed && strings.Contains(*ec.ErrorDetails, "Status Code 499")
+		}))
+	})
+
+	t.Run("Fail listener execution without retrying for a non-2xx, non-4xx HTTP response", func(t *testing.T) {
+		attempts := 0
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			attempts++
+			w.WriteHeader(http.StatusMultipleChoices)
+		}))
+		defer server.Close()
+		registry := NewListenerRegistry()
+		registry.RegisterType("DummyEvent", &DummyEvent{})
+
+		repo := new(eventstorerepo.EventConsumerRepositoryMock)
+		relay := NewMemoryRelay(registry, repo, dummyTracer, retryer, retryOptions, metricsRegistry)
+
+		event := DummyEvent{
+			BaseEvent: *NewBaseEvent(),
+			Message:   "fail",
+		}
+
+		registerHelper(registry, dummyEventType)
+
+		payload, _ := json.Marshal(event)
+		eventStore := eventstore.EventStore{
+			Type:            "DummyEvent",
+			Payload:         datatypes.JSON(payload),
+			PublicationType: eventstore.HTTP,
+			EventConsumers: []eventstore.EventConsumer{
+				{
+					Type:   server.URL,
+					Status: eventstore.Pending,
+				},
+			},
+		}
+
+		repo.On("Save", mock.Anything, mock.Anything).Return(nil)
+
+		err := relay.Relay(context.Background(), &[]eventstore.EventStore{eventStore})
+
+		time.Sleep(200 * time.Millisecond)
+		assert.NoError(t, err)
+		assert.Equal(t, 1, attempts)
+		repo.AssertCalled(t, "Save", mock.Anything, mock.MatchedBy(func(ec *eventstore.EventConsumer) bool {
+			return ec.Status == eventstore.Failed && strings.Contains(*ec.ErrorDetails, "Status Code 300")
+		}))
+	})
+
 	t.Run("Handle cases where consumer type doesn't match listener name", func(t *testing.T) {
 		registry := NewListenerRegistry()
 		registry.RegisterType("DummyEvent", &DummyEvent{})

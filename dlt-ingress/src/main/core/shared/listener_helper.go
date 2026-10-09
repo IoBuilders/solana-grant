@@ -8,6 +8,7 @@ import (
 	"dlt-ingress/src/main/config"
 	"dlt-ingress/src/main/core/utils"
 
+	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/config"
 	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/event"
 	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/port/retry"
 )
@@ -17,7 +18,7 @@ import (
 func WrapRetryableListener(
 	listener event.Listener,
 	retryer retry.Retryer,
-	bcConfig *config.BcRetryableListenerConfig,
+	bcConfig *coreconfig.BcRetryableListenerConfig,
 	extraOpts ...event.RetryableListenerOption,
 ) func(ctx context.Context, event event.Event) error {
 	mergedCfg := mergeConfig(listener, bcConfig)
@@ -31,7 +32,7 @@ func WrapRetryableListener(
 	return event.NewRetryableListener(listener, retryer, opts...).Listen
 }
 
-func validateAndPanic(cfg *config.RetryConfig) {
+func validateAndPanic(cfg *coreconfig.RetryConfig) {
 	if cfg.MaxAttempts != nil && *cfg.MaxAttempts <= 0 {
 		panic("MaxAttempts must be greater than 0")
 	}
@@ -49,12 +50,12 @@ func validateAndPanic(cfg *config.RetryConfig) {
 	}
 }
 
-func mergeConfig(listener event.Listener, bcConfig *config.BcRetryableListenerConfig) *config.RetryConfig {
-	merged := &config.RetryConfig{}
+func mergeConfig(listener event.Listener, bcConfig *coreconfig.BcRetryableListenerConfig) *coreconfig.RetryConfig {
+	merged := &coreconfig.RetryConfig{}
 
 	// 1. App default configuration
-	if config.AppConfig != nil && config.AppConfig.RetryableListeners.Default != nil {
-		applyConfig(merged, config.AppConfig.RetryableListeners.Default)
+	if config.DltIngressConfig != nil && config.DltIngressConfig.RetryableListeners.Default != nil {
+		applyConfig(merged, config.DltIngressConfig.RetryableListeners.Default)
 	}
 
 	// 2. Bounded Context default configuration (overrides app default)
@@ -72,7 +73,7 @@ func mergeConfig(listener event.Listener, bcConfig *config.BcRetryableListenerCo
 	return merged
 }
 
-func applyConfig(target, source *config.RetryConfig) {
+func applyConfig(target, source *coreconfig.RetryConfig) {
 	if source.MaxAttempts != nil {
 		target.MaxAttempts = source.MaxAttempts
 	}
@@ -95,7 +96,7 @@ func WrapLockTimeoutRetryableListener(
 	listener event.Listener,
 	retryer retry.Retryer,
 ) func(ctx context.Context, ev event.Event) error {
-	optConfs := ToRetryOptionConfigs(&config.AppConfig.DltIngress.LockTimeoutRetryableListeners.Retry)
+	optConfs := ToRetryOptionConfigs(&config.DltIngressConfig.DltIngress.LockTimeoutRetryableListeners.Retry)
 	optConfs = append(optConfs, retry.WithExcludeLogic(func(err error) bool {
 		return !utils.IsLockTimeoutError(err)
 	}))
@@ -113,7 +114,7 @@ func WrapLockTimeoutRetryableListener(
 // without having to repeat it under every bounded context's `listeners` map; omit it otherwise.
 // YAML keys use the package portion of the listener name (before the first dot) to avoid viper's
 // dot-as-key-delimiter splitting behaviour, so "ordercreateasset.Listener" looks up "ordercreateasset".
-func GetListenerConcurrency(listenerName string, bcConfig *config.BcListenerConfig, sharedVar ...*int) int {
+func GetListenerConcurrency(listenerName string, bcConfig *coreconfig.BcListenerConfig, sharedVar ...*int) int {
 	if len(sharedVar) > 0 && sharedVar[0] != nil {
 		return *sharedVar[0]
 	}
@@ -126,8 +127,8 @@ func GetListenerConcurrency(listenerName string, bcConfig *config.BcListenerConf
 			return *bcConfig.ConcurrencyDefault
 		}
 	}
-	if config.AppConfig != nil && config.AppConfig.ListenerConfig.Defaults.Concurrency != nil {
-		return *config.AppConfig.ListenerConfig.Defaults.Concurrency
+	if config.DltIngressConfig != nil && config.DltIngressConfig.ListenerConfig.Defaults.Concurrency != nil {
+		return *config.DltIngressConfig.ListenerConfig.Defaults.Concurrency
 	}
 	return 0
 }
@@ -138,7 +139,7 @@ func GetListenerConcurrency(listenerName string, bcConfig *config.BcListenerConf
 // every lock-timeout-retryable listener via listenerConfig.defaults.lockTimeoutRetryable.executionTimeout);
 // omit it otherwise.
 // YAML keys use the package portion of the listener name (before the first dot).
-func GetListenerExecutionTimeout(listenerName string, bcConfig *config.BcListenerConfig, sharedVar ...*time.Duration) time.Duration {
+func GetListenerExecutionTimeout(listenerName string, bcConfig *coreconfig.BcListenerConfig, sharedVar ...*time.Duration) time.Duration {
 	if len(sharedVar) > 0 && sharedVar[0] != nil {
 		return *sharedVar[0]
 	}
@@ -151,26 +152,28 @@ func GetListenerExecutionTimeout(listenerName string, bcConfig *config.BcListene
 			return *bcConfig.ExecutionTimeoutDefault
 		}
 	}
-	if config.AppConfig != nil && config.AppConfig.ListenerConfig.Defaults.ExecutionTimeout != nil {
-		return *config.AppConfig.ListenerConfig.Defaults.ExecutionTimeout
+	if config.DltIngressConfig != nil && config.DltIngressConfig.ListenerConfig.Defaults.ExecutionTimeout != nil {
+		return *config.DltIngressConfig.ListenerConfig.Defaults.ExecutionTimeout
 	}
 	return 0
 }
 
-func ToRetryOptionConfigs(cfg *config.RetryConfig) []retry.OptionConfig {
+func ToRetryOptionConfigs(cfg *coreconfig.RetryConfig) []retry.OptionConfig {
 	var retryOptionConfigs []retry.OptionConfig
 
-	if cfg.MaxAttempts != nil {
-		retryOptionConfigs = append(retryOptionConfigs, retry.WithMaxAttempts(*cfg.MaxAttempts))
-	}
-	if cfg.Delay != nil {
-		retryOptionConfigs = append(retryOptionConfigs, retry.WithDelay(*cfg.Delay))
-	}
-	if cfg.MaxDelay != nil {
-		retryOptionConfigs = append(retryOptionConfigs, retry.WithMaxDelay(*cfg.MaxDelay))
-	}
-	if cfg.Multiplier != nil {
-		retryOptionConfigs = append(retryOptionConfigs, retry.WithMultiplier(*cfg.Multiplier))
+	if cfg != nil {
+		if cfg.MaxAttempts != nil {
+			retryOptionConfigs = append(retryOptionConfigs, retry.WithMaxAttempts(*cfg.MaxAttempts))
+		}
+		if cfg.Delay != nil {
+			retryOptionConfigs = append(retryOptionConfigs, retry.WithDelay(*cfg.Delay))
+		}
+		if cfg.MaxDelay != nil {
+			retryOptionConfigs = append(retryOptionConfigs, retry.WithMaxDelay(*cfg.MaxDelay))
+		}
+		if cfg.Multiplier != nil {
+			retryOptionConfigs = append(retryOptionConfigs, retry.WithMultiplier(*cfg.Multiplier))
+		}
 	}
 
 	return retryOptionConfigs

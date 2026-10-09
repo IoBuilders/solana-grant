@@ -2,25 +2,26 @@ package dltingressconfig
 
 import (
 	"context"
-	"dlt-ingress/src/main/core/shared"
+	"dlt-ingress/src/main/config"
 	"sync"
 )
 
 type LazyDltIngress struct {
-	once sync.Once
-	core *shared.CoreCommon
-	opts []DltIngressOption
+	once             sync.Once
+	dltIngressconfig *config.Config
+	core             *CoreDependencies
+	opts             []DltIngressOption
 	*DltIngress
 	shutdownFn func(context.Context) error
 }
 
-func NewLazyDltIngress(core *shared.CoreCommon, opts ...DltIngressOption) *LazyDltIngress {
-	return &LazyDltIngress{core: core, opts: opts}
+func NewLazyDltIngress(dltIngressconfig *config.Config, core *CoreDependencies, opts ...DltIngressOption) *LazyDltIngress {
+	return &LazyDltIngress{dltIngressconfig: dltIngressconfig, core: core, opts: opts}
 }
 
 func (l *LazyDltIngress) Init(ctx context.Context) {
 	l.once.Do(func() {
-		l.DltIngress, l.shutdownFn = Setup(ctx, l.core, l.opts...)
+		l.DltIngress, l.shutdownFn = Setup(ctx, l.dltIngressconfig, l.core, l.opts...)
 	})
 }
 

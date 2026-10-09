@@ -216,7 +216,13 @@ func (m *MemoryRelay) updateConsumerStatus(
 		m.registerMetric(ctx)
 	}
 
-	if saveErr := m.eventConsumerRepository.Save(ctx, &c); saveErr != nil {
+	var saveCtx context.Context
+	if ctx.Err() != nil {
+		saveCtx = context.Background() // If we use a context with error, database operations will fail leaving consumers in processing statuses
+	} else {
+		saveCtx = ctx
+	}
+	if saveErr := m.eventConsumerRepository.Save(saveCtx, &c); saveErr != nil {
 		logger.ErrorWithCtx(ctx, fmt.Sprintf("Critical: Could not save status for %s", c.Type), "error", saveErr)
 	}
 }
@@ -241,9 +247,15 @@ func (m *MemoryRelay) newHTTPListenerDefinition(eventStore *eventstore.EventStor
 					_, _ = io.Copy(io.Discard, res.Body)
 					_ = res.Body.Close()
 				}()
-				if res.StatusCode >= 500 {
+				if res.StatusCode < 200 || res.StatusCode >= 300 {
 					errBody, _ := io.ReadAll(io.LimitReader(res.Body, 512))
-					return nil, fmt.Errorf("error calling HTTP API %s for blockchain event. Status Code %d. Response %s", eventConsumer.Type, res.StatusCode, string(errBody))
+					httpErr := fmt.Errorf("error calling HTTP API %s for blockchain event. Status Code %d. Response %s", eventConsumer.Type, res.StatusCode, string(errBody))
+					if res.StatusCode >= 500 {
+						// Server-side failures may be transient; keep retrying.
+						return nil, httpErr
+					}
+					// Any other non-2xx response (1xx/3xx/4xx) is a deterministic rejection; retrying would just repeat it.
+					return nil, retry.NewNonRetryableError(httpErr)
 				}
 			}
 			return nil, err

@@ -119,19 +119,7 @@ docker compose logs -f quickstart-receiver
 
 Within a second or two, the receiver's logs show the `MintDeployed` event that naryo-go captured from the chain and broadcast, including the decoded instruction parameters (mint, decimals, name, symbol, etc.) and the transaction signature that carried it.
 
-## Step 6: Trigger and observe a failed transaction
-
-`factory`'s `initialize` instruction creates the singleton Factory PDA with Anchor's `init` constraint, which can only succeed once. Re-run 4.1 from `dlt-ingress/`:
-
-```bash
-go run ./src/examples/factoryinitialize
-```
-
-This second call fails on-chain: the Factory PDA already exists, so the `init` constraint's account-creation CPI is rejected by the System Program. naryo-go's quickstart config carries a `TRANSACTION` filter for `FAILED` status scoped to the Factory program address (`FEY9E77nH7R1gLGNxkhYKchJpB6MgpMrWMhkNXrNhzR5`), alongside the one already covering the Deploy program — so this failure is captured too.
-
-Watch `quickstart-receiver`'s logs (same as Step 5). Within a second or two it shows the failed transaction on `/transactions`, with `hasError: true`. Unlike the Deploy program, `application.yaml`'s `programErrors` table has no entry mapping this program's `Custom(0)` to a friendly name, so `reason` falls back to the generic `"custom program error: 0"` instead of a decoded name like `AccountAlreadyInUse` — a useful contrast with the Deploy program's own duplicate-call case, which naryo-go's own [quickstart tutorial](naryo-go/docs/tutorials/naryo_quickstart.md#trigger-a-failed-transaction-and-observe-revert-reason-decoding) demonstrates does have a mapped name.
-
-## Step 7: Tear down
+## Step 6: Tear down
 
 ```bash
 # from naryo-go/

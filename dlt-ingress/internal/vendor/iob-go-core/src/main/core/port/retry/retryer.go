@@ -21,6 +21,23 @@ type Options struct {
 
 type OptionConfig func(opts *Options)
 
+// NonRetryableError marks err as terminal: CustomRetryer stops after the
+// first attempt regardless of the configured Options.exclude/excludeLogic.
+type NonRetryableError struct{ error }
+
+// NewNonRetryableError wraps err so the retryer treats it as a terminal
+// failure instead of retrying it.
+func NewNonRetryableError(err error) error {
+	if err == nil {
+		return nil
+	}
+	return NonRetryableError{err}
+}
+
+func (e NonRetryableError) Unwrap() error {
+	return e.error
+}
+
 func NewOptions(optConfs ...OptionConfig) Options {
 	options := Options{
 		maxAttempts: 3,
@@ -58,12 +75,16 @@ func WithMultiplier(multiplier float64) OptionConfig {
 	}
 }
 
+// WithExclude stops retrying on errors matching any of exclude. A coreerror.RetryAfterError is always
+// retried regardless.
 func WithExclude(exclude []error) OptionConfig {
 	return func(opts *Options) {
 		opts.exclude = exclude
 	}
 }
 
+// WithExcludeLogic stops retrying on errors for which excludeLogic returns true. A
+// coreerror.RetryAfterError is always retried regardless.
 func WithExcludeLogic(excludeLogic func(err error) bool) OptionConfig {
 	return func(opts *Options) {
 		opts.excludeLogic = excludeLogic

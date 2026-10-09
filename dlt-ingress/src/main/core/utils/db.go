@@ -1,16 +1,16 @@
 package utils
 
 import (
-	"dlt-ingress/src/main/config"
 	"errors"
 	"strings"
 
 	"github.com/lib/pq"
+	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/config"
 	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/db"
 	"gorm.io/gorm"
 )
 
-func NewPostgresDB(cfg *config.DatabaseConfig) (*gorm.DB, error) {
+func NewPostgresDB(cfg *coreconfig.DatabaseConfig) (*gorm.DB, error) {
 	var options []db.DBOption
 
 	dbURL := ensureTimezoneUTC(cfg.Url)

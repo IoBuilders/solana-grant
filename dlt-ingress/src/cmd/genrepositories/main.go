@@ -2,17 +2,17 @@ package main
 
 import (
 	"bytes"
-	cmdcore "dlt-ingress/src/cmd/core"
 	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
 	"os"
 	"path/filepath"
-	"regexp"
 	"sort"
 	"strings"
 	"text/template"
+
+	cmdcore "dlt-ingress/src/cmd/core"
 
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
@@ -199,7 +199,7 @@ func findAndGenerate(bc, infraDir, pkgName, repoName, domainImport, entityName, 
 				continue
 			}
 
-			fullEntityPath := strings.ToLower(entityName) + "." + entityName
+			fullEntityPath := pkgName + "." + entityName
 
 			err := generateCode(bc, fileName, pkg.Name, "Postgres"+repoName, domainImport, fullEntityPath, relation)
 			if err != nil {
@@ -318,23 +318,7 @@ func generateMock(bc, origPath, packageName, typeName, domainImport, entityNameP
 }
 
 func getDomainErrorsPath(bc, importPath string) string {
-	if cmdcore.IsErrorRefactor(bc) {
-		return "gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/domain/domainerrors"
-	} else {
-		path := strings.Trim(importPath, "\" ")
-		re := regexp.MustCompile(`(dlt-ingress/src/main/)([^/]+)/((internal/)?domain)`)
-		matches := re.FindStringSubmatch(path)
-
-		if len(matches) < 4 {
-			return ""
-		}
-
-		prefix := matches[1]
-		boundedContext := matches[2]
-		domainPart := matches[3]
-
-		return fmt.Sprintf("%s%s/%s/domainerrors", prefix, boundedContext, domainPart)
-	}
+	return "gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/domain/domainerrors"
 }
 
 func entityName(entity string) string {

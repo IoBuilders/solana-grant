@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"runtime/debug"
@@ -211,22 +212,29 @@ func joinAndCheck(root, domain string) string {
 
 // Migrate applies all SQL migrations
 func Migrate(db *gorm.DB, domain string) error {
+	migrationsDir, err := getMigrationsDir(domain)
+	if err != nil {
+		return fmt.Errorf("failed to locate migrations: %w", err)
+	}
+	return migrate(db, domain, os.DirFS(migrationsDir))
+}
+
+func MigrateFS(db *gorm.DB, domain string, migrationsFS fs.FS) error {
+	return migrate(db, domain, migrationsFS)
+}
+
+func migrate(db *gorm.DB, domain string, migrationsFS fs.FS) error {
 	sqlDB, err := db.DB()
 	if err != nil {
 		return fmt.Errorf("failed to get sql.DB: %w", err)
 	}
 
-	migrationsDir, err := getMigrationsDir(domain)
-	if err != nil {
-		return fmt.Errorf("failed to locate migrations: %w", err)
-	}
-
-	files, err := os.ReadDir(migrationsDir)
+	files, err := fs.ReadDir(migrationsFS, ".")
 	if err != nil {
 		return fmt.Errorf("failed to read migrations directory: %w", err)
 	}
 
-	var migrations []os.DirEntry
+	var migrations []fs.DirEntry
 	for _, file := range files {
 		if strings.HasSuffix(file.Name(), ".sql") {
 			migrations = append(migrations, file)
@@ -237,19 +245,19 @@ func Migrate(db *gorm.DB, domain string) error {
 	})
 
 	if _, err := sqlDB.Exec(`
-		CREATE TABLE IF NOT EXISTS schema_migrations (
-			version VARCHAR(255) PRIMARY KEY,
-			applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-		);
-	`); err != nil {
+        CREATE TABLE IF NOT EXISTS schema_migrations (
+            version VARCHAR(255) PRIMARY KEY,
+            applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    `); err != nil {
 		return fmt.Errorf("failed to create migrations table: %w", err)
 	}
 
 	for _, migration := range migrations {
 		var version string
 		err := sqlDB.QueryRow(`
-			SELECT version FROM schema_migrations WHERE version = $1
-		`, migration.Name()).Scan(&version)
+            SELECT version FROM schema_migrations WHERE version = $1
+        `, migration.Name()).Scan(&version)
 
 		if err == nil {
 			continue
@@ -257,7 +265,7 @@ func Migrate(db *gorm.DB, domain string) error {
 			return fmt.Errorf("failed to check migration status: %w", err)
 		}
 
-		content, err := os.ReadFile(filepath.Join(migrationsDir, migration.Name()))
+		content, err := fs.ReadFile(migrationsFS, migration.Name())
 		if err != nil {
 			return fmt.Errorf("failed to read migration file %s: %w", migration.Name(), err)
 		}
@@ -273,8 +281,8 @@ func Migrate(db *gorm.DB, domain string) error {
 		}
 
 		if _, err := tx.Exec(`
-			INSERT INTO schema_migrations (version) VALUES ($1)
-		`, migration.Name()); err != nil {
+            INSERT INTO schema_migrations (version) VALUES ($1)
+        `, migration.Name()); err != nil {
 			_ = tx.Rollback()
 			return fmt.Errorf("failed to record migration %s: %w", migration.Name(), err)
 		}

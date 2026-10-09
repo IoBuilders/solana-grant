@@ -15,11 +15,15 @@ services:
       timeout: 5s
       retries: 10
 
-  # Local Solana RPC node for testing: a fast in-memory validator that forks mainnet accounts
-  # on demand (https://github.com/solana-foundation/surfpool). Ships its own HEALTHCHECK
-  # (a getHealth RPC call), so `condition: service_healthy` below just works.
+  # Local Solana RPC node for testing: a fast in-memory validator
+  # (https://github.com/solana-foundation/surfpool). Runs with --offline, so it starts from an
+  # empty chain (built-in SPL Token, Token-2022 and ATA programs only) instead of forking mainnet
+  # accounts on demand: no dependency on, or rate limiting by, the public mainnet RPC. State is
+  # lost on restart, so re-airdrop the deploy wallet and redeploy the programs afterwards.
+  # Ships its own HEALTHCHECK (a getHealth RPC call), so `condition: service_healthy` below just works.
   surfpool:
     image: surfpool/surfpool:latest
+    command: ["start", "--no-tui", "--offline"]
     ports:
       - "8899:8899" # RPC
       - "8900:8900" # WebSocket

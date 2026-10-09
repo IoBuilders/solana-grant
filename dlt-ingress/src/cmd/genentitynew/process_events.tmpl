@@ -21,11 +21,6 @@ type TransitToOrderedEvent struct {
 	ProcessId uuid.UUID
 }
 
-type TransitToFinishedEvent struct {
-	event.BaseEvent
-	ProcessId uuid.UUID
-}
-
 type TransitToFailedEvent struct {
 	event.BaseEvent
 	ProcessId uuid.UUID

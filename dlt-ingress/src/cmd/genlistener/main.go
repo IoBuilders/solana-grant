@@ -238,7 +238,7 @@ func resolveImport(file *ast.File, qualifier string) (string, error) {
 }
 
 // declaredPackageName returns the `package X` name for an import path.
-// For local (dlt-ingress) imports it reads the package clause directly; for external
+// For local (asseto-engine-api) imports it reads the package clause directly; for external
 // packages it asks `go list` so names that differ from the path segment (e.g.
 // event/api → apievent) are resolved correctly.
 func declaredPackageName(importPath string) string {

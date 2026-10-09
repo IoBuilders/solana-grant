@@ -120,8 +120,10 @@ func (cb *BusInMemory) Dispatch(ctx context.Context, command Command) (Response,
 	}
 
 	if len(results) != 2 {
-		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			return nil, fmt.Errorf("transaction rollback error: %w", rollbackErr)
+		if tx != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				return nil, fmt.Errorf("transaction rollback error: %w", rollbackErr)
+			}
 		}
 		return nil, fmt.Errorf("handler returned unexpected number of results")
 	}

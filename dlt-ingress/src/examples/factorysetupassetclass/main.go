@@ -2,19 +2,17 @@ package main
 
 import (
 	"context"
-	"dlt-ingress"
-	"dlt-ingress/src/main/config"
-	"dlt-ingress/src/main/core"
-	"dlt-ingress/src/main/dltingress/domain/common"
-	"dlt-ingress/src/main/dltingress/port/command/createkey"
-	"dlt-ingress/src/main/dltingress/port/command/signandsend"
 	"fmt"
 	"time"
+
+	"dlt-ingress/src/examples"
+	"dlt-ingress/src/main/config"
+	"dlt-ingress/src/main/dltingress/port/crosscommand/createkey"
+	"dlt-ingress/src/main/dltingress/port/crosscommand/signandsend"
 
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
 	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/logger"
-	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/observability"
 )
 
 // Runs the full asset class onboarding flow against the Factory program in a
@@ -30,25 +28,13 @@ import (
 // between separate process executions.
 func main() {
 	ctx := context.Background()
-	if err := config.LoadConfig(ctx); err != nil {
-		panic(fmt.Errorf("failed to load config: %w", err))
-	}
-	_, err := observability.SetupOTelSDK(
-		ctx,
-		observability.WithLogLevel(config.AppConfig.LoggingConfig.Level),
-		observability.WithLogFormat(config.AppConfig.LoggingConfig.Format),
-		observability.WithScope(observability.NewScope("gitlab.com/iobuilders/projects/eng/o2d/dlt-ingress", dlt_ingress.Version)),
-	)
-	if err != nil {
-		panic(fmt.Errorf("failed to setup otel sdk: %w", err))
-	}
-	core.StartApplication(ctx)
+	dltIngressModule := examples.InitModule(ctx)
 
 	// 0. Reuse the manager registered by factoryinitialize, and create a new
 	// FACTORY_MANAGER_DLT_ACCOUNT_ID
-	managerDltAccountId := ""
-	cmd := &createkeycross.CrossCommand{Dlt: string(common.SVM)}
-	response, err := core.App.DltIngress.CrossCommandBus.Dispatch(ctx, cmd)
+	managerDltAccountId := "D2qrES3S94xbSKYyBg6jwUtBDufuzwz7HeCa9h4Q3UTa"
+	cmd := &createkeycross.CrossCommand{Dlt: "SVM"}
+	response, err := dltIngressModule.CrossCommandBus.Dispatch(ctx, cmd)
 	if err != nil {
 		panic(fmt.Errorf("failed to create account: %w", err))
 	}
@@ -56,7 +42,7 @@ func main() {
 	ownerPubKey := solana.MustPublicKeyFromBase58(ownerDltAccountId)
 
 	// 1. Request SOL to manager and owner accounts
-	rpcClient := rpc.New(config.AppConfig.DltIngress.Networks[0].Url)
+	rpcClient := rpc.New(config.DltIngressConfig.DltIngress.Networks[0].Url)
 	for _, dltAccountId := range []string{managerDltAccountId, ownerDltAccountId} {
 		_, err = rpcClient.RequestAirdrop(
 			ctx,
@@ -89,7 +75,7 @@ func main() {
 	}
 
 	// 2. create_asset_class
-	_, err = core.App.DltIngress.CrossCommandBus.Dispatch(ctx, &signandsendcross.CrossCommand{
+	response, err = dltIngressModule.CrossCommandBus.Dispatch(ctx, &signandsendcross.CrossCommand{
 		SenderDltAccountId:   managerDltAccountId,
 		SignersDltAccountIds: []string{managerDltAccountId},
 		SmartContractId:      factoryProgramId,
@@ -107,11 +93,14 @@ func main() {
 	if err != nil {
 		panic(fmt.Errorf("failed to create asset class: %w", err))
 	}
-	logger.InfoWithCtx(ctx, "Asset class created")
-	time.Sleep(3 * time.Second)
+	signature := response.(*signandsendcross.CrossResponse).TxId
+	if err := examples.WaitForConfirmation(ctx, rpcClient, signature, 30*time.Second); err != nil {
+		panic(fmt.Errorf("create asset class transaction did not confirm: %w", err))
+	}
+	logger.InfoWithCtx(ctx, fmt.Sprintf("Asset class created, signature: %s", signature))
 
 	// 3. init_asset_class_version
-	_, err = core.App.DltIngress.CrossCommandBus.Dispatch(ctx, &signandsendcross.CrossCommand{
+	response, err = dltIngressModule.CrossCommandBus.Dispatch(ctx, &signandsendcross.CrossCommand{
 		SenderDltAccountId:   ownerDltAccountId,
 		SignersDltAccountIds: []string{ownerDltAccountId},
 		SmartContractId:      factoryProgramId,
@@ -129,11 +118,14 @@ func main() {
 	if err != nil {
 		panic(fmt.Errorf("failed to init asset class version: %w", err))
 	}
-	logger.InfoWithCtx(ctx, "Asset class version initialized")
-	time.Sleep(3 * time.Second)
+	signature = response.(*signandsendcross.CrossResponse).TxId
+	if err := examples.WaitForConfirmation(ctx, rpcClient, signature, 30*time.Second); err != nil {
+		panic(fmt.Errorf("init asset class version transaction did not confirm: %w", err))
+	}
+	logger.InfoWithCtx(ctx, fmt.Sprintf("Asset class version initialized, signature: %s", signature))
 
 	// 4. enable_asset_class_version_functionalities
-	_, err = core.App.DltIngress.CrossCommandBus.Dispatch(ctx, &signandsendcross.CrossCommand{
+	response, err = dltIngressModule.CrossCommandBus.Dispatch(ctx, &signandsendcross.CrossCommand{
 		SenderDltAccountId:   ownerDltAccountId,
 		SignersDltAccountIds: []string{ownerDltAccountId},
 		SmartContractId:      factoryProgramId,
@@ -152,11 +144,14 @@ func main() {
 	if err != nil {
 		panic(fmt.Errorf("failed to enable asset class version functionalities: %w", err))
 	}
-	logger.InfoWithCtx(ctx, "Asset class version functionalities enabled")
-	time.Sleep(3 * time.Second)
+	signature = response.(*signandsendcross.CrossResponse).TxId
+	if err := examples.WaitForConfirmation(ctx, rpcClient, signature, 30*time.Second); err != nil {
+		panic(fmt.Errorf("enable asset class version functionalities transaction did not confirm: %w", err))
+	}
+	logger.InfoWithCtx(ctx, fmt.Sprintf("Asset class version functionalities enabled, signature: %s", signature))
 
 	// 5. finalize_asset_class_version
-	_, err = core.App.DltIngress.CrossCommandBus.Dispatch(ctx, &signandsendcross.CrossCommand{
+	response, err = dltIngressModule.CrossCommandBus.Dispatch(ctx, &signandsendcross.CrossCommand{
 		SenderDltAccountId:   ownerDltAccountId,
 		SignersDltAccountIds: []string{ownerDltAccountId},
 		SmartContractId:      factoryProgramId,
@@ -174,8 +169,12 @@ func main() {
 	if err != nil {
 		panic(fmt.Errorf("failed to finalize asset class version: %w", err))
 	}
+	signature = response.(*signandsendcross.CrossResponse).TxId
+	if err := examples.WaitForConfirmation(ctx, rpcClient, signature, 30*time.Second); err != nil {
+		panic(fmt.Errorf("finalize asset class version transaction did not confirm: %w", err))
+	}
 	logger.InfoWithCtx(ctx, fmt.Sprintf(
-		"Asset class version finalized. Reuse this owner in the other examples:\n  export FACTORY_ASSET_CLASS_OWNER_DLT_ACCOUNT_ID=%s",
-		ownerDltAccountId,
+		"Asset class version finalized, signature: %s. Reuse this owner in the other examples:\n  export FACTORY_ASSET_CLASS_OWNER_DLT_ACCOUNT_ID=%s",
+		signature, ownerDltAccountId,
 	))
 }

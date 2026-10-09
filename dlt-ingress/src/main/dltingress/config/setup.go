@@ -2,40 +2,44 @@ package dltingressconfig
 
 import (
 	"context"
-	"dlt-ingress/src/main/dltingress/config/metrics"
-	"dlt-ingress/src/main/dltingress/domain/queuelock"
 	"fmt"
+
+	"dlt-ingress/src/main/dltingress/config/metrics"
+	"dlt-ingress/src/main/dltingress/internal/domain/queuelock"
+	"dlt-ingress/src/main/dltingress/internal/infra/evm"
+	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/health"
+
+	"os"
 
 	"dlt-ingress/src/main/config"
 	"dlt-ingress/src/main/core/shared"
 	"dlt-ingress/src/main/core/utils"
-	"dlt-ingress/src/main/dltingress/domain/common"
-	"dlt-ingress/src/main/dltingress/port/boundedblockingqueue"
-	"dlt-ingress/src/main/dltingress/port/command/adapters"
-	"dlt-ingress/src/main/dltingress/port/contractcallbuilder"
-	"dlt-ingress/src/main/dltingress/port/contractcaller"
-	"dlt-ingress/src/main/dltingress/port/contracttransactionbuilder"
-	"dlt-ingress/src/main/dltingress/port/custody"
-	"dlt-ingress/src/main/dltingress/port/evm"
-	"dlt-ingress/src/main/dltingress/port/nonceprovider"
-	"dlt-ingress/src/main/dltingress/port/query/adapters"
-	"dlt-ingress/src/main/dltingress/port/repository"
-	"dlt-ingress/src/main/dltingress/port/svm"
-	"dlt-ingress/src/main/dltingress/port/transactiongasestimator"
-	"dlt-ingress/src/main/dltingress/port/transanctionsender"
-	"os"
+	"dlt-ingress/src/main/dltingress/internal/domain/common"
+	"dlt-ingress/src/main/dltingress/internal/infra/boundedblockingqueue"
+	"dlt-ingress/src/main/dltingress/internal/infra/contractcallbuilder"
+	"dlt-ingress/src/main/dltingress/internal/infra/contractcaller"
+	"dlt-ingress/src/main/dltingress/internal/infra/contracttransactionbuilder"
+	"dlt-ingress/src/main/dltingress/internal/infra/custody"
+	"dlt-ingress/src/main/dltingress/internal/infra/nonceprovider"
+	"dlt-ingress/src/main/dltingress/internal/infra/repository"
+	"dlt-ingress/src/main/dltingress/internal/infra/svm"
+	"dlt-ingress/src/main/dltingress/internal/infra/transactiongasestimator"
+	"dlt-ingress/src/main/dltingress/internal/infra/transanctionsender"
 
-	querygetfailedevents "gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/app/query/getfailedevents"
+	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/app/query/getfailedevents"
+	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/cache"
 	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/command"
+	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/config"
 	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/db"
 	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/event"
 	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/logger"
+	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/observability/metrics"
 	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/port/retry"
 	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/query"
+	"go.opentelemetry.io/otel/trace"
 	"gorm.io/gorm"
 )
 
-// TODO: Add a interface common to all bounded contexts
 const BoundedContextName = "dltingress"
 
 type DltIngress struct {
@@ -43,16 +47,12 @@ type DltIngress struct {
 	CommandBus                        command.Bus
 	EventBus                          event.Bus
 	ListenerRegistry                  *event.ListenerRegistry
-	CrossListenerRegistry             *event.ListenerRegistry
 	DB                                *gorm.DB
-	Repositories                      *repository.DltIngressRepositories
+	Repositories                      *DltIngressRepositories
 	JanitorWorker                     *event.JanitorWorker
-	CrossJanitorWorker                *event.JanitorWorker
 	BoundedBlockingQueueJanitorWorker *boundedblockingqueue.JanitorWorker
 	EventStoreWorker                  *event.StoreWorker
-	CrossEventStoreWorker             *event.StoreWorker
 	Relay                             event.Relay
-	CrossRelay                        event.Relay
 	CrossCommandBus                   command.CrossBus
 	CrossQueryBus                     query.CrossBus
 	CrossEventBus                     event.CrossBus
@@ -71,6 +71,19 @@ type DltIngress struct {
 	SvmClientRegistry                 svm.ClientRegistry
 }
 
+type CoreDependencies struct {
+	QueryBus              query.Bus
+	CrossQueryBus         query.CrossBus
+	CrossCommandBus       command.CrossBus
+	CrossEventBus         event.CrossBus
+	CrossListenerRegistry *event.ListenerRegistry
+	Retryer               retry.Retryer
+	Tracer                trace.Tracer
+	Cache                 cache.Port
+	MetricsRegistry       *metrics.Registry
+	HealthRegistry        *health.Registry
+}
+
 type DltIngressOption func(ingress *DltIngress)
 
 func WithEventBus(eventBus event.Bus) DltIngressOption {
@@ -85,7 +98,7 @@ func WithDB(db *gorm.DB) DltIngressOption {
 	return func(i *DltIngress) { i.DB = db }
 }
 
-func WithRepositories(repositories *repository.DltIngressRepositories) DltIngressOption {
+func WithRepositories(repositories *DltIngressRepositories) DltIngressOption {
 	return func(i *DltIngress) { i.Repositories = repositories }
 }
 
@@ -94,7 +107,8 @@ func WithCustodyProvider(custodyProvider custody.Port) DltIngressOption {
 }
 
 // Setup initializes the DltIngress components
-func Setup(ctx context.Context, core *shared.CoreCommon, opts ...DltIngressOption) (*DltIngress, func(context.Context) error) {
+func Setup(ctx context.Context, dltIngressConfig *config.Config, core *CoreDependencies, opts ...DltIngressOption) (*DltIngress, func(context.Context) error) {
+	config.DltIngressConfig = dltIngressConfig
 	var dltIngress DltIngress
 	for _, opt := range opts {
 		opt(&dltIngress)
@@ -106,15 +120,11 @@ func Setup(ctx context.Context, core *shared.CoreCommon, opts ...DltIngressOptio
 	tm := db.NewGormTransactionManager(dltIngress.DB)
 
 	if dltIngress.Repositories == nil {
-		dltIngress.Repositories = repository.SetupRepositories(dltIngress.DB, tm)
+		dltIngress.Repositories = SetupRepositories(dltIngress.DB, tm)
 	}
 
 	if dltIngress.ListenerRegistry == nil {
 		dltIngress.ListenerRegistry = event.NewListenerRegistry()
-	}
-
-	if dltIngress.CrossListenerRegistry == nil {
-		dltIngress.CrossListenerRegistry = event.NewListenerRegistry()
 	}
 
 	if dltIngress.EventBus == nil {
@@ -123,21 +133,23 @@ func Setup(ctx context.Context, core *shared.CoreCommon, opts ...DltIngressOptio
 
 	if dltIngress.CustodyProvider == nil {
 		provider, err := custody.NewCustodyProvider(custody.Config{
-			Provider: config.AppConfig.DltIngress.Custody.Provider,
+			Provider: config.DltIngressConfig.DltIngress.Custody.Provider,
 			Dfns: custody.DfnsConfig{
-				BaseUrl:      config.AppConfig.DltIngress.Custody.Dfns.BaseUrl,
-				AuthToken:    config.AppConfig.DltIngress.Custody.Dfns.AuthToken,
-				CredentialID: config.AppConfig.DltIngress.Custody.Dfns.CredentialID,
-				PrivateKey:   config.AppConfig.DltIngress.Custody.Dfns.PrivateKey,
+				BaseUrl:      config.DltIngressConfig.DltIngress.Custody.Dfns.BaseUrl,
+				AuthToken:    config.DltIngressConfig.DltIngress.Custody.Dfns.AuthToken,
+				CredentialID: config.DltIngressConfig.DltIngress.Custody.Dfns.CredentialID,
+				PrivateKey:   config.DltIngressConfig.DltIngress.Custody.Dfns.PrivateKey,
 			},
 			Kms: custody.KMSConfig{
-				Region:      config.AppConfig.DltIngress.Custody.Kms.Region,
-				AccessKey:   config.AppConfig.DltIngress.Custody.Kms.AccessKey,
-				SecretKey:   config.AppConfig.DltIngress.Custody.Kms.SecretKey,
-				Endpoint:    config.AppConfig.DltIngress.Custody.Kms.Endpoint,
-				Tags:        mapKMSTags(config.AppConfig.DltIngress.Custody.Kms.Tags),
-				AliasPrefix: config.AppConfig.DltIngress.Custody.Kms.AliasPrefix,
+				Region:      config.DltIngressConfig.DltIngress.Custody.Kms.Region,
+				AccessKey:   config.DltIngressConfig.DltIngress.Custody.Kms.AccessKey,
+				SecretKey:   config.DltIngressConfig.DltIngress.Custody.Kms.SecretKey,
+				Endpoint:    config.DltIngressConfig.DltIngress.Custody.Kms.Endpoint,
+				Tags:        mapKMSTags(config.DltIngressConfig.DltIngress.Custody.Kms.Tags),
+				AliasPrefix: config.DltIngressConfig.DltIngress.Custody.Kms.AliasPrefix,
 			},
+			RateLimit:      config.DltIngressConfig.DltIngress.Custody.RateLimit,
+			RequestTimeout: config.DltIngressConfig.DltIngress.Custody.RequestTimeout,
 		})
 		if err != nil {
 			logger.ErrorWithCtx(ctx, "failed to create custody provider", "error", err)
@@ -146,15 +158,27 @@ func Setup(ctx context.Context, core *shared.CoreCommon, opts ...DltIngressOptio
 		dltIngress.CustodyProvider = provider
 	}
 
-	retryConfig := retry.NewOptions(shared.ToRetryOptionConfigs(config.AppConfig.RetryableListeners.Default)...)
+	retryConfig := retry.NewOptions(shared.ToRetryOptionConfigs(config.DltIngressConfig.RetryableListeners.Default)...)
 	dltIngress.ContractCallBuilderRegistry = *contractcallbuilder.NewRegistry()
 	dltIngress.ContractCallerRegistry = *contractcaller.NewRegistry()
 	dltIngress.TransactionBuilderRegistry = *contracttransactionbuilder.NewRegistry()
 	dltIngress.TransactionSenderRegistry = *transanctionsender.NewRegistry()
 	dltIngress.TransactionGasEstimationRegistry = *transactiongasestimator.NewRegistry()
-	dltIngress.EvmClientRegistry = core.EvmClientRegistry
+	evmNetworksConfigs := config.DltIngressConfig.DltIngress.GetDltIngressNetworksByDlt(string(common.EVM))
+	evmClientRegistry, err := evm.NewClientRegistry(evmNetworksConfigs, core.HealthRegistry)
+	if err != nil {
+		logger.ErrorWithCtx(ctx, "failed to create evm client registry", "error", err)
+		panic(err)
+	}
+	dltIngress.EvmClientRegistry = evmClientRegistry
 	dltIngress.NonceProvider = nonceprovider.NewDbNonceProvider(dltIngress.Repositories.NonceRepo, dltIngress.EvmClientRegistry)
-	dltIngress.SvmClientRegistry = svm.NewClientRegistry()
+	svmNetworksConfigs := config.DltIngressConfig.DltIngress.GetDltIngressNetworksByDlt(string(common.SVM))
+	svmClientRegistry, err := svm.NewClientRegistry(svmNetworksConfigs, core.HealthRegistry)
+	if err != nil {
+		logger.ErrorWithCtx(ctx, "failed to create svm client registry", "error", err)
+		panic(err)
+	}
+	dltIngress.SvmClientRegistry = svmClientRegistry
 	dltIngress.BlockhashProvider = svm.NewBlockhashProviderAdapterCache(
 		svm.NewBlockhashProviderAdapter(dltIngress.SvmClientRegistry),
 		core.Cache)
@@ -164,7 +188,7 @@ func Setup(ctx context.Context, core *shared.CoreCommon, opts ...DltIngressOptio
 			dltIngress.Repositories.QueueLockRepo,
 			dltIngress.Repositories.TxQueueSlotRepo,
 			core.Retryer,
-			config.AppConfig.DltIngress.TxBoundedBlockingQueue.Retry.ToRetryOptions(nil, nil),
+			config.DltIngressConfig.DltIngress.TxBoundedBlockingQueue.Retry.ToRetryOptions(nil, nil),
 			tm,
 		),
 		core.MetricsRegistry,
@@ -173,47 +197,55 @@ func Setup(ctx context.Context, core *shared.CoreCommon, opts ...DltIngressOptio
 	dltIngress.CommandBus = command.NewCommandBus(tm, nil, core.MetricsRegistry)
 	dltIngress.AppServices = SetupAppServices(dltIngress.NonceProvider, dltIngress.BlockhashProvider, dltIngress.TransactionBuilderRegistry, dltIngress.EvmClientRegistry, dltIngress.SvmClientRegistry, dltIngress.TransactionGasEstimationRegistry, dltIngress.CommandBus, dltIngress.Repositories)
 	dltIngress.DltIngressQueryBus = query.NewQueryBus()
-	config.AppConfig.MustValidateSemaphoreTimeout(BoundedContextName)
-	stackCfg := eventStackConfig{BoundedContextName, dltIngress.ListenerRegistry, retryConfig, core, false}
-	dltIngress.Relay, dltIngress.EventStoreWorker, dltIngress.JanitorWorker = dltIngress.createEventStack(stackCfg)
+	coreconfig.MustValidateSemaphoreTimeout(BoundedContextName, config.DltIngressConfig.EventStore.DltIngress, config.DltIngressConfig.EventStore.Default, config.DltIngressConfig.Janitor.DltIngress, config.DltIngressConfig.Janitor.Default)
+	config.DltIngressConfig.MustValidateSignPollingTimeoutInDltIngress()
+	config.DltIngressConfig.MustValidateCustodyRequestTimeoutInDltIngress()
+	dltIngress.Relay = event.NewMemoryRelay(dltIngress.ListenerRegistry, dltIngress.Repositories.EventConsumerRepo, core.Tracer, core.Retryer, retryConfig, core.MetricsRegistry).
+		WithSemaphoreWaitTimeout(coreconfig.GetSemaphoreWaitTimeout(config.DltIngressConfig.EventStore.DltIngress, config.DltIngressConfig.EventStore.Default))
+	dltIngress.EventStoreWorker = event.NewStoreWorker(
+		coreconfig.GetEventStoreInterval(config.DltIngressConfig.EventStore.DltIngress, config.DltIngressConfig.EventStore.Default),
+		coreconfig.GetEventStoreBatchSize(config.DltIngressConfig.EventStore.DltIngress, config.DltIngressConfig.EventStore.Default),
+		dltIngress.Repositories.EventStoreRepo,
+		dltIngress.Relay,
+		false,
+	)
+	go func() {
+		err := dltIngress.EventStoreWorker.Start(ctx)
+		if err != nil {
+			logger.ErrorWithCtx(ctx, "failed to start dltIngress event store worker", "error", err)
+		} else {
+			logger.InfoWithCtx(ctx, "dltIngress event store worker started")
+		}
+	}()
 
-	crossStackCfg := eventStackConfig{BoundedContextName, dltIngress.CrossListenerRegistry, retryConfig, core, true}
-	dltIngress.CrossRelay, dltIngress.CrossEventStoreWorker, dltIngress.CrossJanitorWorker = dltIngress.createEventStack(crossStackCfg)
-
-	if dltIngress.CrossCommandBus == nil {
-		dltIngress.CrossCommandBus = command.NewCrossCommandBus(nil, core.MetricsRegistry)
-	}
-
-	if dltIngress.CrossQueryBus == nil {
-		dltIngress.CrossQueryBus = query.NewCrossQueryBus()
-	}
-
-	if dltIngress.CrossEventBus == nil {
-		dltIngress.CrossEventBus = event.NewOutboxCrossBus(dltIngress.Repositories.EventStoreRepo, dltIngress.CrossListenerRegistry, core.MetricsRegistry)
-	}
-
-	go dltIngress.startWorkers(ctx)
-
+	dltIngress.JanitorWorker = event.NewJanitorWorker(
+		dltIngress.Repositories.EventConsumerRepo,
+		coreconfig.GetJanitorInterval(config.DltIngressConfig.Janitor.DltIngress, config.DltIngressConfig.Janitor.Default),
+		coreconfig.GetJanitorThreshold(config.DltIngressConfig.Janitor.DltIngress, config.DltIngressConfig.Janitor.Default),
+	)
 	dltIngress.JanitorWorker.Start(ctx)
-	dltIngress.CrossJanitorWorker.Start(ctx)
 
 	dltIngress.BoundedBlockingQueueJanitorWorker = boundedblockingqueue.NewJanitorWorker(
-		config.AppConfig.DltIngress.TxBoundedBlockingQueue.ExpiredCleanInterval,
+		config.DltIngressConfig.DltIngress.TxBoundedBlockingQueue.ExpiredCleanInterval,
 		dltIngress.Repositories.TxQueueSlotRepo,
 	)
 	dltIngress.BoundedBlockingQueueJanitorWorker.Start(ctx)
 
+	dltIngress.CrossCommandBus = core.CrossCommandBus
+	dltIngress.CrossQueryBus = core.CrossQueryBus
+	dltIngress.CrossEventBus = core.CrossEventBus
+
 	RegisterEvents(dltIngress.ListenerRegistry)
-	RegisterCrossEvents(dltIngress.CrossListenerRegistry)
+	RegisterCrossEvents(core.CrossListenerRegistry)
 	RegisterListeners(
 		dltIngress.ListenerRegistry,
 		core.Retryer,
-		config.AppConfig.RetryableListeners.DltIngress,
+		config.DltIngressConfig.RetryableListeners.DltIngress,
 		dltIngress.CrossEventBus,
 		dltIngress.AppServices,
-		config.AppConfig.ListenerConfig.DltIngress,
+		config.DltIngressConfig.ListenerConfig.DltIngress,
 	)
-	RegisterCrossListeners(dltIngress.CrossListenerRegistry, core.Retryer, config.AppConfig.RetryableListeners.DltIngress, config.AppConfig.ListenerConfig.DltIngress)
+	RegisterCrossListeners(core.CrossListenerRegistry, core.Retryer, config.DltIngressConfig.RetryableListeners.CrossShared, config.DltIngressConfig.ListenerConfig.CrossShared)
 
 	if err := dltingressmetrics.SetupMetrics(core.MetricsRegistry); err != nil {
 		panic(err)
@@ -244,7 +276,6 @@ func Setup(ctx context.Context, core *shared.CoreCommon, opts ...DltIngressOptio
 		}
 
 		dltIngress.Relay.Wait()
-		dltIngress.CrossRelay.Wait()
 		if dltIngress.DB != nil {
 			sqlDB, err := dltIngress.DB.DB()
 			if err == nil {
@@ -271,7 +302,7 @@ func CreateDBConnection(ctx context.Context) (*gorm.DB, error) {
 }
 
 // setupCommandBus initializes the command bus
-func setupCommandBus(dltIngress *DltIngress, core *shared.CoreCommon) {
+func setupCommandBus(dltIngress *DltIngress, core *CoreDependencies) {
 	handlers := InitCommandHandlers(CommandHandlerDeps{
 		Repositories:                     dltIngress.Repositories,
 		CustodyProvider:                  dltIngress.CustodyProvider,
@@ -282,6 +313,7 @@ func setupCommandBus(dltIngress *DltIngress, core *shared.CoreCommon) {
 		TransactionGasEstimationRegistry: dltIngress.TransactionGasEstimationRegistry,
 		BoundedBlockingQueue:             dltIngress.BoundedBlockingQueue,
 		EvmClientRegistry:                dltIngress.EvmClientRegistry,
+		SvmClientRegistry:                dltIngress.SvmClientRegistry,
 		AppServices:                      dltIngress.AppServices,
 		MetricsRegistry:                  core.MetricsRegistry,
 	})
@@ -293,25 +325,27 @@ func setupQueryBus(queryBus query.Bus, dltIngress *DltIngress) {
 		Repositories:                dltIngress.Repositories,
 		ContractCallBuilderRegistry: dltIngress.ContractCallBuilderRegistry,
 		ContractCallerRegistry:      dltIngress.ContractCallerRegistry,
+		EvmClientRegistry:           dltIngress.EvmClientRegistry,
+		SvmClientRegistry:           dltIngress.SvmClientRegistry,
 	})
 	utils.RegisterQueryHandlers(queryBus, handlers)
 
 	// A different query bus for the query is needed because each bounded context will use its own event consumer repository so the core query bus is not valid. In the future there will not be a core query bus.
-	utils.RegisterQueryHandlers(dltIngress.DltIngressQueryBus, []any{querygetfailedevents.NewHandler(dltIngress.Repositories.EventConsumerRepo)})
+	utils.RegisterQueryHandlers(dltIngress.DltIngressQueryBus, []any{getfailedevents.NewHandler(dltIngress.Repositories.EventConsumerRepo)})
 }
 
 func setupCrossCommandBus(dltIngress *DltIngress) {
-	adapterList := adapters.InitCommandAdapters(dltIngress.CommandBus)
+	adapterList := InitCommandAdapters(dltIngress.CommandBus)
 	utils.RegisterCrossCommandAdapters(dltIngress.CrossCommandBus, adapterList)
 }
 
 func setupCrossQueryBus(dltIngress *DltIngress, queryBus query.Bus) {
-	adapterList := queryadapters.InitQueryAdapters(queryBus)
+	adapterList := InitQueryAdapters(queryBus)
 	utils.RegisterCrossQueryAdapters(dltIngress.CrossQueryBus, adapterList)
 }
 
 func setupDltRegistries(dltIngress *DltIngress) {
-	for _, network := range config.AppConfig.DltIngress.Networks {
+	for _, network := range config.DltIngressConfig.DltIngress.Networks {
 		dlt := common.Dlt(network.Dlt)
 		switch dlt {
 		case common.EVM:
@@ -341,24 +375,24 @@ func setupDltBuilders(dltIngress *DltIngress) error {
 	for dlt, contractDefinitions := range SmartContractDefinitions {
 		for contractName, contractInterface := range contractDefinitions {
 			switch dlt {
-			case common.EVM:
+			case string(common.EVM):
 				txBuilder, err := contracttransactionbuilder.NewEvmContractTransactionBuilder(contractInterface)
 				if err != nil {
 					return err
 				}
-				dltIngress.TransactionBuilderRegistry.Register(dlt, contractName, txBuilder)
+				dltIngress.TransactionBuilderRegistry.Register(common.Dlt(dlt), contractName, txBuilder)
 
 				callBuilder, err := contractcallbuilder.NewEvmContractCallBuilder(contractInterface)
 				if err != nil {
 					return err
 				}
-				dltIngress.ContractCallBuilderRegistry.Register(dlt, contractName, callBuilder)
-			case common.SVM:
+				dltIngress.ContractCallBuilderRegistry.Register(common.Dlt(dlt), contractName, callBuilder)
+			case string(common.SVM):
 				contractTransactionBuilder, err := contracttransactionbuilder.NewSvmIdlTransactionBuilder([]byte(contractInterface))
 				if err != nil {
 					return err
 				}
-				dltIngress.TransactionBuilderRegistry.Register(dlt, contractName, contractTransactionBuilder)
+				dltIngress.TransactionBuilderRegistry.Register(common.Dlt(dlt), contractName, contractTransactionBuilder)
 			default:
 				logger.Error(fmt.Sprintf("Unsupported dlt type: %s", dlt))
 			}
@@ -368,62 +402,13 @@ func setupDltBuilders(dltIngress *DltIngress) error {
 }
 
 func setupQueueLocks(ctx context.Context, dltIngress *DltIngress, tm db.TransactionManager) {
-	for _, network := range config.AppConfig.DltIngress.Networks {
+	for _, network := range config.DltIngressConfig.DltIngress.Networks {
 		if err := dltIngress.Repositories.QueueLockRepo.CreateIfNotExists(ctx, &queuelock.QueueLock{NetworkId: network.Id}); err != nil {
 			panic(fmt.Errorf("failed to configure queue lock: %w", err))
 		}
 	}
 }
 
-type eventStackConfig struct {
-	contextName string
-	registry    *event.ListenerRegistry
-	retryConfig retry.Options
-	core        *shared.CoreCommon
-	isCross     bool
-}
-
-func (s *DltIngress) createEventStack(cfg eventStackConfig) (event.Relay, *event.StoreWorker, *event.JanitorWorker) {
-	relay := event.NewMemoryRelay(
-		cfg.registry,
-		s.Repositories.EventConsumerRepo,
-		cfg.core.Tracer,
-		cfg.core.Retryer,
-		cfg.retryConfig,
-		cfg.core.MetricsRegistry,
-	).WithSemaphoreWaitTimeout(config.AppConfig.GetSemaphoreWaitTimeout(cfg.contextName))
-
-	worker := event.NewStoreWorker(
-		config.AppConfig.GetEventStoreInterval(cfg.contextName),
-		config.AppConfig.GetEventStoreBatchSize(cfg.contextName),
-		s.Repositories.EventStoreRepo,
-		relay,
-		cfg.isCross,
-	)
-
-	janitor := event.NewJanitorWorker(
-		s.Repositories.EventConsumerRepo,
-		config.AppConfig.GetJanitorInterval(cfg.contextName),
-		config.AppConfig.GetJanitorThreshold(cfg.contextName),
-	)
-
-	return relay, worker, janitor
-}
-
-func (s *DltIngress) startWorkers(ctx context.Context) {
-	workers := map[string]*event.StoreWorker{
-		"dlt-ingress":              s.EventStoreWorker,
-		"dlt-ingress-shared-cross": s.CrossEventStoreWorker,
-	}
-
-	for name, w := range workers {
-		go func(workerName string, worker *event.StoreWorker) {
-			logger.InfoWithCtx(ctx, "worker starting...", "name", name)
-			if err := worker.Start(ctx); err != nil {
-				logger.ErrorWithCtx(ctx, "failed to start worker", "name", name, "error", err)
-			} else {
-				logger.InfoWithCtx(ctx, "worker started", "name", name)
-			}
-		}(name, w)
-	}
+func NewInMemoryProvider() custody.Port {
+	return custody.NewInMemoryProvider()
 }

@@ -48,6 +48,8 @@ func TestHandleError_StatusCodes(t *testing.T) {
 		{"sentinel without DomainError", coreerror.ErrNotFound, http.StatusInternalServerError},
 		{"context deadline exceeded", context.DeadlineExceeded, http.StatusGatewayTimeout},
 		{"wrapped deadline exceeded", fmt.Errorf("repo: %w", context.DeadlineExceeded), http.StatusGatewayTimeout},
+		{"too many requests", coreerror.ErrTooManyRequests, http.StatusTooManyRequests},
+		{"wrapped too many requests", fmt.Errorf("query: %w", fmt.Errorf("rpc: %w", coreerror.ErrTooManyRequests)), http.StatusTooManyRequests},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -149,4 +151,41 @@ func TestRespondBindingError_ValidatorErrors(t *testing.T) {
 	got := decode(t, w.Body.Bytes())
 	assert.Equal(t, "VALIDATION_ERROR", got.Code)
 	assert.Equal(t, "Email: required", got.Error)
+}
+
+// stubThrottledError stands in for any error that knows when the caller may
+// retry, without depending on the rate limiter here.
+type stubThrottledError struct{ seconds int }
+
+func (e *stubThrottledError) Error() string {
+	return "upstream rate limit exceeded for method eth_call"
+}
+func (e *stubThrottledError) Unwrap() error          { return coreerror.ErrTooManyRequests }
+func (e *stubThrottledError) RetryAfterSeconds() int { return e.seconds }
+
+func TestRespondError_TooManyRequests(t *testing.T) {
+	c, w := newTestContext()
+	RespondError(c, fmt.Errorf("reading allowance: %w", &stubThrottledError{seconds: 30}))
+
+	assert.Equal(t, http.StatusTooManyRequests, w.Code)
+	assert.Equal(t, "30", w.Header().Get("Retry-After"))
+	body := decode(t, w.Body.Bytes())
+	assert.Equal(t, "TOO_MANY_REQUESTS", body.Code)
+	assert.NotContains(t, body.Error, "eth_call", "internal cause must not leak to client")
+}
+
+func TestRespondError_TooManyRequests_NoHeaderWhenUnknown(t *testing.T) {
+	c, w := newTestContext()
+	RespondError(c, &stubThrottledError{seconds: 0})
+
+	assert.Equal(t, http.StatusTooManyRequests, w.Code)
+	assert.Empty(t, w.Header().Get("Retry-After"))
+}
+
+func TestRespondError_NoRetryAfterHeaderForOtherErrors(t *testing.T) {
+	c, w := newTestContext()
+	RespondError(c, errors.New("boom"))
+
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
+	assert.Empty(t, w.Header().Get("Retry-After"))
 }

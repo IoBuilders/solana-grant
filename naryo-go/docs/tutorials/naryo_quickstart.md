@@ -63,10 +63,9 @@ docker compose logs -f quickstart-receiver
 
 naryo-go's quickstart doesn't bundle its own transaction sender, so triggering the event means
 sending a real `deploy_mint` instruction to the watched program. The example in
-[`dlt-ingress`](https://gitlab.com/iobuilders/projects/eng/iob-core/dlt-ingress)'s
-`src/examples/deployasset` does exactly that. It's a *dependency of this step only*, not of
-naryo-go itself: naryo-go doesn't call, build, or link against dlt-ingress in any way, it's just
-the tool this quickstart borrows to put a real event on the chain for naryo-go to capture.
+dlt-ingress's `src/examples/deployasset` does exactly that. It's a *dependency of this step only*,
+not of naryo-go itself: naryo-go doesn't call, build, or link against dlt-ingress in any way,
+it's just the tool this quickstart borrows to put a real event on the chain for naryo-go to capture.
 
 > **Access note**: `dlt-ingress` is a private io.builders GitLab repository, as is the
 > `asseto-solana-programs` Anchor
