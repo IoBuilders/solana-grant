@@ -185,6 +185,5 @@ func InitModule(ctx context.Context) *dltingressconfig.LazyDltIngress {
 	metrics.SetDefaultMeter(noop.Meter{})
 	dltIngressModule := dltingressconfig.NewLazyDltIngress(dltIngressConfig, coreDependencies)
 	dltIngressModule.Init(ctx)
-	dltIngressModule.CrossEventBus = event.NewOutboxCrossBus(dltIngressModule.Repositories.EventStoreRepo, coreDependencies.CrossListenerRegistry, coreDependencies.MetricsRegistry)
 	return dltIngressModule
 }
