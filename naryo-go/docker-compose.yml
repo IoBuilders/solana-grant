@@ -22,7 +22,7 @@ services:
   # lost on restart, so re-airdrop the deploy wallet and redeploy the programs afterwards.
   # Ships its own HEALTHCHECK (a getHealth RPC call), so `condition: service_healthy` below just works.
   surfpool:
-    image: surfpool/surfpool:latest
+    image: surfpool/surfpool:1.5.0
     command: ["start", "--no-tui", "--offline"]
     ports:
       - "8899:8899" # RPC
