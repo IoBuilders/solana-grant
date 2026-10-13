@@ -67,17 +67,17 @@ dlt-ingress's `src/examples/deployasset` does exactly that. It's a *dependency o
 not of naryo-go itself: naryo-go doesn't call, build, or link against dlt-ingress in any way,
 it's just the tool this quickstart borrows to put a real event on the chain for naryo-go to capture.
 
-> **Access note**: `dlt-ingress` is a private io.builders GitLab repository, as is the
-> `asseto-solana-programs` Anchor
-> project it deploys. This step needs io.builders GitLab access to run yourself. If you don't
-> have it, skip ahead to the sample output below to see what a successful run produces.
+> **Note**: `dlt-ingress` lives in this repository (`dlt-ingress/`) and the
+> [asseto-solana-programs](https://github.com/IoBuilders/asseto-solana-programs) Anchor project
+> it deploys is public, so no private repository access is needed to run this step. The skip-ahead
+> sample output below shows what a successful run produces.
 
 What follows is `dlt-ingress`'s own "Running the example"
 procedure, with one adjustment: it normally has you start your own local Solana validator too,
 but this quickstart skips that step and reuses the surfpool instance already running from
 naryo-go's Step 1 above.
 
-In a separate checkout of `dlt-ingress`:
+From the `dlt-ingress/` directory of this repository:
 
 **Start the local infrastructure**: `dlt-ingress`'s own dependencies (Postgres, and an
 AWS-compatible endpoint for KMS via [ministack](https://hub.docker.com/r/ministackorg/ministack)):
@@ -86,13 +86,13 @@ AWS-compatible endpoint for KMS via [ministack](https://hub.docker.com/r/minista
 docker-compose up -d
 ```
 
-This starts Postgres on `localhost:5432` (user/password/db `dltingress`) and a ministack
+This starts Postgres on `localhost:5434` (user/password/db `dltingress`) and a ministack
 instance (emulating AWS, including KMS) on `localhost:4566`, matching the defaults in
-`src/main/config/application.yml`. `dlt-ingress` additionally needs a local Solana validator
+`src/examples/application.yml`. `dlt-ingress` additionally needs a local Solana validator
 reachable at `http://127.0.0.1:8899`.
 
 **Deploy the programs**: `dlt-ingress`'s default `ASSETO_DEFAULT_NETWORK_URL`
-(`src/main/config/application.yml`) is `http://127.0.0.1:8899`, the exact address naryo-go's
+(`src/examples/application.yml`) is `http://127.0.0.1:8899`, the exact address naryo-go's
 quickstart already publishes to the host, so deploy straight against the surfpool instance
 already running from Step 1:
 
@@ -199,8 +199,8 @@ anchor deploy --provider.cluster http://127.0.0.1:8899
 `~/duplicate-deploy.ts`. It doesn't touch or depend on `asseto-solana-programs`'s own source or
 test files, only its already-built IDL (`target/idl/deploy.json`, produced by `anchor build`
 above) and two Solana JS libraries the project already has installed. It also does what
-`dlt-ingress` can't: `dlt-ingress`'s sender always preflight-simulates before sending, so it
-rejects a failing transaction client-side before it's ever included in a block -- naryo-go's
+`dlt-ingress` can't: `dlt-ingress` sends with preflight enabled, so the node simulates the
+transaction first and rejects a failing one before it's ever included in a block -- naryo-go's
 block-polling pipeline never sees anything to decode. This script sends with `skipPreflight`
 instead, so the failure actually lands on-chain.
 
