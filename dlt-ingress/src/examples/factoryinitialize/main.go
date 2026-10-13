@@ -36,14 +36,8 @@ func main() {
 	// 2. Request SOL to payer account
 	rpcClient := rpc.New(config.DltIngressConfig.DltIngress.Networks[0].Url)
 	pubKey := solana.MustPublicKeyFromBase58(payerDltAccountId)
-	_, err = rpcClient.RequestAirdrop(
-		ctx,
-		pubKey,
-		1000*solana.LAMPORTS_PER_SOL,
-		rpc.CommitmentFinalized,
-	)
-	if err != nil {
-		panic(fmt.Errorf("failed to airdrop account: %w", err))
+	if err = examples.AirdropAndConfirm(ctx, rpcClient, pubKey, 1000*solana.LAMPORTS_PER_SOL, 30*time.Second); err != nil {
+		panic(err)
 	}
 
 	factoryProgramId := "FEY9E77nH7R1gLGNxkhYKchJpB6MgpMrWMhkNXrNhzR5"
