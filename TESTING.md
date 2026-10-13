@@ -27,7 +27,8 @@ flowchart LR
 
 - Docker & Docker Compose
 - Go
-- [Anchor CLI](https://www.anchor-lang.com/docs/installation) and the Solana CLI
+- [Anchor CLI](https://www.anchor-lang.com/docs/installation) 1.0.2 and the Solana CLI 3.1.14 (pinned in [`asseto-solana-programs/Anchor.toml`](asseto-solana-programs/Anchor.toml)); Rust 1.89.0 is pinned by `asseto-solana-programs/rust-toolchain.toml`. Using other CLI versions may behave differently.
+- surfpool 1.5.0, pinned in `naryo-go/docker-compose.yml` (only needed locally if you run it outside Docker)
 
 ## Step 1: Start naryo-go's quickstart stack
 
