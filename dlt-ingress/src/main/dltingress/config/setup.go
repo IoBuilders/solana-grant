@@ -233,6 +233,11 @@ func Setup(ctx context.Context, dltIngressConfig *config.Config, core *CoreDepen
 
 	dltIngress.CrossCommandBus = core.CrossCommandBus
 	dltIngress.CrossQueryBus = core.CrossQueryBus
+	// Listeners hold the cross bus they are registered with, so it must exist before RegisterListeners
+	// below. Default it, like the event bus, to an outbox bus on this module's own event store.
+	if core.CrossEventBus == nil {
+		core.CrossEventBus = event.NewOutboxCrossBus(dltIngress.Repositories.EventStoreRepo, core.CrossListenerRegistry, core.MetricsRegistry)
+	}
 	dltIngress.CrossEventBus = core.CrossEventBus
 
 	RegisterEvents(dltIngress.ListenerRegistry)
