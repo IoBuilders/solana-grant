@@ -61,7 +61,7 @@ Submitting a transaction (building, signing, and sending) is serialized per netw
 
 ### Multi-network, multi-DLT configuration
 
-Networks are configured as a list, each entry carrying its own id, RPC URL, DLT technology (`EVM`, `SVM`, …) and technology-specific parameters (chain id, gas price/limit and priority fee for EVM; compute-unit price for SVM). At startup, dlt-ingress builds a client registry per technology and looks up the right client for a given network id at runtime, which is what allows an arbitrary mix of EVM and SVM (and future DLT) networks to run side by side in the same instance. See **src/main/config/application.yml** file for configuration options.
+Networks are configured as a list, each entry carrying its own id, RPC URL, DLT technology (`EVM`, `SVM`, …) and technology-specific parameters (chain id, gas price/limit and priority fee for EVM; compute-unit price for SVM). At startup, dlt-ingress builds a client registry per technology and looks up the right client for a given network id at runtime, which is what allows an arbitrary mix of EVM and SVM (and future DLT) networks to run side by side in the same instance. See **src/examples/application.yml** file for configuration options.
 
 ### Failed transactions and retries
 
@@ -87,7 +87,7 @@ The examples target a local Solana validator plus dlt-ingress's own dependencies
 docker-compose up -d
 ```
 
-This starts Postgres on `localhost:5434` and a ministack instance (emulating AWS, including KMS) on `localhost:4566` — matching the defaults in `src/main/config/application.yml`. You additionally need a local Solana validator reachable at `http://127.0.0.1:8899`.
+This starts Postgres on `localhost:5434` and a ministack instance (emulating AWS, including KMS) on `localhost:4566` — matching the defaults in `src/examples/application.yml`. You additionally need a local Solana validator reachable at `http://127.0.0.1:8899`.
 
 ### 2. Start local Solana validator and deploy programs 
 

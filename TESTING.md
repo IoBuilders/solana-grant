@@ -74,7 +74,7 @@ From [`dlt-ingress/`](dlt-ingress/):
 docker-compose up -d
 ```
 
-This starts dlt-ingress's own Postgres instance and a [ministack](https://hub.docker.com/r/ministackorg/ministack) instance (emulating AWS, including KMS) on `localhost:4566`, matching the defaults in `src/main/config/application.yml`. dlt-ingress's default `ASSETO_DEFAULT_NETWORK_URL` is `http://127.0.0.1:8899` — the same surfpool instance already running from Step 1, so no separate validator is needed.
+This starts dlt-ingress's own Postgres instance and a [ministack](https://hub.docker.com/r/ministackorg/ministack) instance (emulating AWS, including KMS) on `localhost:4566`, matching the defaults in `src/examples/application.yml`. dlt-ingress's default `ASSETO_DEFAULT_NETWORK_URL` is `http://127.0.0.1:8899` — the same surfpool instance already running from Step 1, so no separate validator is needed.
 
 dlt-ingress has no private Go module dependencies, so no ioBuilders GitLab access or `GOPRIVATE`/`.netrc` setup is needed to build or run it.
 
@@ -127,7 +127,7 @@ Within a second or two, the receiver's logs show the `MintDeployed` event that n
 make compose-down
 
 # from dlt-ingress/
-docker-compose down
+docker-compose down -v
 ```
 
 ## What this demonstrates
