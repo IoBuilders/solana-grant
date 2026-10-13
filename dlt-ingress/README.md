@@ -57,7 +57,9 @@ For Solana-compatible networks, a blockhash provider fetches the network's recen
 
 ### Concurrency control
 
-Submitting a transaction (building, signing, and sending) is serialized per network through a database-backed bounded blocking queue: a slot is taken before building/signing/sending and released afterwards (or on failure). This prevents a configured number of concurrent requests on the same network from racing, while different networks — regardless of their underlying DLT technology — proceed independently and concurrently.
+Submitting a transaction (building, signing, and sending) is serialized per network through a database-backed bounded blocking queue: a slot is taken before building/signing/sending. This prevents a configured number of concurrent requests on the same network from racing, while different networks — regardless of their underlying DLT technology — proceed independently and concurrently.
+
+**Slot release.** dlt-ingress releases a slot itself only on the failure paths of a send (build, sign or submit errors). After a successful send the slot stays occupied until the consumer of this library releases it by calling `Take(ctx, networkId)` on the `BoundedBlockingQueue` exposed by the `DltIngress` struct returned from `Setup`, typically once the transaction has reached the outcome the consumer cares about (confirmed, failed or expired). If it doesn't, the slot is only reclaimed by the expiry janitor after `txBoundedBlockingQueue.expirationTime` (1 h by default), so with the default `maxTxPoolSize` of 1,000 a network is capped at roughly 1,000 sends per hour. `Take` frees the oldest unexpired slot of the network, not a specific one, and it runs in its own database transaction, so call it outside the transaction of the command that triggered it. The examples show the pattern: `examples.ConfirmAndReleaseSlot` (`src/examples/confirm.go`) waits for the transaction to confirm and then calls `Take`.
 
 ### Multi-network, multi-DLT configuration
 

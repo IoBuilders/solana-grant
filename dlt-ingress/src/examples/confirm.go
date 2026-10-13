@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"dlt-ingress/src/main/config"
+	"dlt-ingress/src/main/dltingress/config"
+
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
 )
@@ -49,4 +52,19 @@ func AirdropAndConfirm(ctx context.Context, rpcClient *rpc.Client, account solan
 		return fmt.Errorf("failed to airdrop account %s: %w", account, err)
 	}
 	return WaitForConfirmation(ctx, rpcClient, signature.String(), timeout)
+}
+
+// ConfirmAndReleaseSlot waits for the signature to be confirmed and then releases the network's queue
+// slot that signandsend took for it. dlt-ingress doesn't release that slot after a successful send,
+// so the consumer, here the example, does it once the transaction has reached a terminal state. If the
+// transaction doesn't confirm, the slot is left to expire.
+func ConfirmAndReleaseSlot(ctx context.Context, module *dltingressconfig.LazyDltIngress, rpcClient *rpc.Client, signature string, timeout time.Duration) error {
+	if err := WaitForConfirmation(ctx, rpcClient, signature, timeout); err != nil {
+		return err
+	}
+	networkId := config.DltIngressConfig.DltIngress.Networks[0].Id
+	if err := module.BoundedBlockingQueue.Take(ctx, networkId); err != nil {
+		return fmt.Errorf("failed to release queue slot for network %s: %w", networkId, err)
+	}
+	return nil
 }
