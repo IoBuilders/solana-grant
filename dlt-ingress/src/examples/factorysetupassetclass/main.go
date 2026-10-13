@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	"dlt-ingress/src/examples"
@@ -30,9 +31,15 @@ func main() {
 	ctx := context.Background()
 	dltIngressModule := examples.InitModule(ctx)
 
-	// 0. Reuse the manager registered by factoryinitialize, and create a new
-	// FACTORY_MANAGER_DLT_ACCOUNT_ID
-	managerDltAccountId := "D2qrES3S94xbSKYyBg6jwUtBDufuzwz7HeCa9h4Q3UTa"
+	// 0. Reuse the manager registered by factoryinitialize (exported by the
+	// user as FACTORY_MANAGER_DLT_ACCOUNT_ID), and create a new owner.
+	managerDltAccountId := os.Getenv("FACTORY_MANAGER_DLT_ACCOUNT_ID")
+	if managerDltAccountId == "" {
+		panic("FACTORY_MANAGER_DLT_ACCOUNT_ID is not set: run factoryinitialize and export the manager account id it logs")
+	}
+	if _, err := solana.PublicKeyFromBase58(managerDltAccountId); err != nil {
+		panic(fmt.Errorf("FACTORY_MANAGER_DLT_ACCOUNT_ID %q is not a valid Solana public key: %w", managerDltAccountId, err))
+	}
 	cmd := &createkeycross.CrossCommand{Dlt: "SVM"}
 	response, err := dltIngressModule.CrossCommandBus.Dispatch(ctx, cmd)
 	if err != nil {

@@ -49,8 +49,8 @@ custody:
     privateKey: ${ASSETO_DFNS_PRIVATE_KEY:}
   kms:
     region: ${ASSETO_KMS_REGION:us-east-1}
-    accessKey: ${ASSETO_KMS_ACCESS_KEY:} # test
-    secretKey: ${ASSETO_KMS_SECRET_KEY:} # test
+    accessKey: ${ASSETO_KMS_ACCESS_KEY:test}
+    secretKey: ${ASSETO_KMS_SECRET_KEY:test}
     endpoint: ${ASSETO_KMS_ENDPOINT:http://localhost:4566}
     tags: ${ASSETO_KMS_TAGS:[]}
     aliasPrefix: ${ASSETO_KMS_ALIAS_PREFIX:alias/asseto/custody}

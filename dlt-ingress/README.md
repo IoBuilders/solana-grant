@@ -76,7 +76,7 @@ If sending a transaction fails, it is recorded. A retry can then be triggered ex
 Each `main.go` under `src/examples/<name>/` is its own `package main` and is run individually with `go run ./src/examples/<name>`. They exercise the **Factory** and **Deploy** programs from [asseto-solana-programs](https://github.com/IoBuilders/asseto-solana-programs):
 
 - **`factoryinitialize`** — initializes the Factory program's singleton Factory account, creating a payer and a manager account and appointing the manager who can later nominate asset class managers. On success it logs the manager's account id.
-- **`factorysetupassetclass`** — runs the full asset class onboarding flow against the Factory program in one execution: `create_asset_class`, `init_asset_class_version`, `enable_asset_class_version_functionalities` (every functionality enabled), and `finalize_asset_class_version`. Requires the Factory account to already be initialized: run `factoryinitialize` first, then paste the manager account id it logged into the `managerDltAccountId` constant near the top of `factorysetupassetclass/main.go` before running it. On success it logs the asset class owner's account id.
+- **`factorysetupassetclass`** — runs the full asset class onboarding flow against the Factory program in one execution: `create_asset_class`, `init_asset_class_version`, `enable_asset_class_version_functionalities` (every functionality enabled), and `finalize_asset_class_version`. Requires the Factory account to already be initialized: run `factoryinitialize` first, then export the manager account id it logged as `FACTORY_MANAGER_DLT_ACCOUNT_ID` before running it. On success it logs the asset class owner's account id.
 
   These four instructions are sent as four separate transactions (with a short sleep between each), not bundled into a single transaction. The `signandsend` cross command currently accepts only one smart contract call per dispatch, and the first instruction is signed by the manager while the other three are signed by the owner, so combining them would first require the `signandsend` port to support multi-instruction transactions.
 - **`deployasset`** — creates a sender and a mint account, airdrops SOL to the sender on the local Solana network, and calls the **deploy_mint** instruction of the **Deploy** program to deploy an asset. It's self-contained and doesn't depend on the other examples.
@@ -116,10 +116,14 @@ Run each example with `go run ./src/examples/<name>`:
 go run ./src/examples/factoryinitialize
 ```
 
-`factoryinitialize` logs the manager account id it registered. Before continuing, paste that id as the value of the `managerDltAccountId` constant on `src/examples/factorysetupassetclass/main.go:49`, then run it:
+`factoryinitialize` logs the manager account id it registered. Before continuing, export that id as `FACTORY_MANAGER_DLT_ACCOUNT_ID` (the example panics if it is missing or invalid), then run it:
 
 ```bash
-# Creates and finalizes an asset class on the Factory (requires the manager account id set above)
+export FACTORY_MANAGER_DLT_ACCOUNT_ID=<manager account id>
+```
+
+```bash
+# Creates and finalizes an asset class on the Factory (requires FACTORY_MANAGER_DLT_ACCOUNT_ID set above)
 go run ./src/examples/factorysetupassetclass
 ```
 

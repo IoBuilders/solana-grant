@@ -54,8 +54,10 @@ docker compose ps
 
 ```bash
 solana-keygen new --outfile test-wallet.json
-solana airdrop 1000
+solana airdrop 1000 $(solana-keygen pubkey test-wallet.json) -u http://127.0.0.1:8899
 ```
+
+The URL and public key are explicit so the airdrop targets the local surfpool and the new wallet, not your default Solana cluster and keypair.
 
 Then build and deploy:
 
@@ -80,6 +82,13 @@ dlt-ingress has no private Go module dependencies, so no ioBuilders GitLab acces
 
 ## Step 4: Run dlt-ingress's examples
 
+The examples sign through ministack's KMS emulation, which needs static test credentials. Without them the AWS SDK falls back to the EC2 instance role and the examples panic with `no EC2 IMDS role found`. In the shell you run the examples from (the values are only for local ministack, never use real credentials):
+
+```bash
+export ASSETO_KMS_ACCESS_KEY=test
+export ASSETO_KMS_SECRET_KEY=test
+```
+
 `dlt-ingress/src/examples/` contains three standalone, runnable programs that drive dlt-ingress through its command buses to exercise the **Factory** and **Deploy** programs end to end. Run them from `dlt-ingress/`, in this order:
 
 ### 4.1 Initialize the Factory
@@ -88,13 +97,14 @@ dlt-ingress has no private Go module dependencies, so no ioBuilders GitLab acces
 go run ./src/examples/factoryinitialize
 ```
 
-Initializes the Factory program's singleton Factory account: creates a payer and a manager account and appoints the manager. On success it logs the manager's account id — copy it for the next step.
+Initializes the Factory program's singleton Factory account: creates a payer and a manager account and appoints the manager. On success it logs the manager's account id and the `export` line to use in the next step.
 
 ### 4.2 Onboard an asset class
 
-Paste the manager account id logged above into the `managerDltAccountId` constant near the top of `src/examples/factorysetupassetclass/main.go`, then:
+Export the manager account id logged above, then run the example (it panics if the variable is missing or isn't a valid public key):
 
 ```bash
+export FACTORY_MANAGER_DLT_ACCOUNT_ID=<manager account id>
 go run ./src/examples/factorysetupassetclass
 ```
 
