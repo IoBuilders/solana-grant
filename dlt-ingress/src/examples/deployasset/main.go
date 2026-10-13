@@ -78,7 +78,7 @@ func main() {
 	}
 	signature := response.(*signandsendcross.CrossResponse).TxId
 
-	if err := examples.WaitForConfirmation(ctx, rpcClient, signature, 30*time.Second); err != nil {
+	if err := examples.ConfirmAndReleaseSlot(ctx, dltIngressModule, rpcClient, signature, 30*time.Second); err != nil {
 		panic(fmt.Errorf("deploy asset transaction did not confirm: %w", err))
 	}
 	logger.InfoWithCtx(ctx, fmt.Sprintf("Asset deployment finished: %s, signature: %s", mintDltAccountId, signature))

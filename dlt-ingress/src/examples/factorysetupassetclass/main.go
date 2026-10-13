@@ -88,7 +88,7 @@ func main() {
 		panic(fmt.Errorf("failed to create asset class: %w", err))
 	}
 	signature := response.(*signandsendcross.CrossResponse).TxId
-	if err := examples.WaitForConfirmation(ctx, rpcClient, signature, 30*time.Second); err != nil {
+	if err := examples.ConfirmAndReleaseSlot(ctx, dltIngressModule, rpcClient, signature, 30*time.Second); err != nil {
 		panic(fmt.Errorf("create asset class transaction did not confirm: %w", err))
 	}
 	logger.InfoWithCtx(ctx, fmt.Sprintf("Asset class created, signature: %s", signature))
@@ -113,7 +113,7 @@ func main() {
 		panic(fmt.Errorf("failed to init asset class version: %w", err))
 	}
 	signature = response.(*signandsendcross.CrossResponse).TxId
-	if err := examples.WaitForConfirmation(ctx, rpcClient, signature, 30*time.Second); err != nil {
+	if err := examples.ConfirmAndReleaseSlot(ctx, dltIngressModule, rpcClient, signature, 30*time.Second); err != nil {
 		panic(fmt.Errorf("init asset class version transaction did not confirm: %w", err))
 	}
 	logger.InfoWithCtx(ctx, fmt.Sprintf("Asset class version initialized, signature: %s", signature))
@@ -139,7 +139,7 @@ func main() {
 		panic(fmt.Errorf("failed to enable asset class version functionalities: %w", err))
 	}
 	signature = response.(*signandsendcross.CrossResponse).TxId
-	if err := examples.WaitForConfirmation(ctx, rpcClient, signature, 30*time.Second); err != nil {
+	if err := examples.ConfirmAndReleaseSlot(ctx, dltIngressModule, rpcClient, signature, 30*time.Second); err != nil {
 		panic(fmt.Errorf("enable asset class version functionalities transaction did not confirm: %w", err))
 	}
 	logger.InfoWithCtx(ctx, fmt.Sprintf("Asset class version functionalities enabled, signature: %s", signature))
@@ -164,7 +164,7 @@ func main() {
 		panic(fmt.Errorf("failed to finalize asset class version: %w", err))
 	}
 	signature = response.(*signandsendcross.CrossResponse).TxId
-	if err := examples.WaitForConfirmation(ctx, rpcClient, signature, 30*time.Second); err != nil {
+	if err := examples.ConfirmAndReleaseSlot(ctx, dltIngressModule, rpcClient, signature, 30*time.Second); err != nil {
 		panic(fmt.Errorf("finalize asset class version transaction did not confirm: %w", err))
 	}
 	logger.InfoWithCtx(ctx, fmt.Sprintf(
