@@ -44,14 +44,8 @@ func main() {
 	// 1. Request SOL to manager and owner accounts
 	rpcClient := rpc.New(config.DltIngressConfig.DltIngress.Networks[0].Url)
 	for _, dltAccountId := range []string{managerDltAccountId, ownerDltAccountId} {
-		_, err = rpcClient.RequestAirdrop(
-			ctx,
-			solana.MustPublicKeyFromBase58(dltAccountId),
-			1000*solana.LAMPORTS_PER_SOL,
-			rpc.CommitmentFinalized,
-		)
-		if err != nil {
-			panic(fmt.Errorf("failed to airdrop account: %w", err))
+		if err = examples.AirdropAndConfirm(ctx, rpcClient, solana.MustPublicKeyFromBase58(dltAccountId), 1000*solana.LAMPORTS_PER_SOL, 30*time.Second); err != nil {
+			panic(err)
 		}
 	}
 

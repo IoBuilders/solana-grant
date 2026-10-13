@@ -40,3 +40,13 @@ func WaitForConfirmation(ctx context.Context, rpcClient *rpc.Client, signature s
 		time.Sleep(500 * time.Millisecond)
 	}
 }
+
+// AirdropAndConfirm requests an airdrop for the account and blocks until it is confirmed, so
+// the caller can safely send a transaction that spends the funds right away.
+func AirdropAndConfirm(ctx context.Context, rpcClient *rpc.Client, account solana.PublicKey, lamports uint64, timeout time.Duration) error {
+	signature, err := rpcClient.RequestAirdrop(ctx, account, lamports, rpc.CommitmentConfirmed)
+	if err != nil {
+		return fmt.Errorf("failed to airdrop account %s: %w", account, err)
+	}
+	return WaitForConfirmation(ctx, rpcClient, signature.String(), timeout)
+}
