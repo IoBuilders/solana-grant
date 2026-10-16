@@ -35,6 +35,19 @@ func (m *SvmClientMock) SendTransaction(ctx context.Context, signedTransaction s
 	return args.String(0), args.Error(1)
 }
 
+func (m *SvmClientMock) GetSignatureStatus(ctx context.Context, signature string) (*SignatureStatus, error) {
+	args := m.Called(ctx, signature)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*SignatureStatus), args.Error(1)
+}
+
+func (m *SvmClientMock) IsBlockhashValid(ctx context.Context, blockhash string) (bool, error) {
+	args := m.Called(ctx, blockhash)
+	return args.Bool(0), args.Error(1)
+}
+
 func (m *SvmClientMock) GetBalance(ctx context.Context, account string) (*amount.Amount, error) {
 	args := m.Called(ctx, account)
 	if args.Get(0) == nil {

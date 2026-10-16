@@ -2,6 +2,7 @@ package svm
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/big"
 	"net"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	"dlt-ingress/src/main/dltingress/internal/infra/noderatelimit"
+
 	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/domain/amount"
 
 	"github.com/gagliardetto/solana-go"
@@ -28,6 +30,8 @@ const (
 // blockhashNotFoundReason is the literal value Solana nodes put in a simulation's top-level
 // TransactionError when the submitted recent blockhash is no longer known to the cluster.
 const blockhashNotFoundReason = "BlockhashNotFound"
+
+const blockhashCommitment = rpc.CommitmentConfirmed
 
 type SolanaGoClient struct {
 	rpcClient *rpc.Client
@@ -61,7 +65,7 @@ func newHTTPTransport() *http.Transport {
 }
 
 func (c *SolanaGoClient) GetRecentBlockhash(ctx context.Context) (string, error) {
-	resp, err := c.rpcClient.GetLatestBlockhash(ctx, rpc.CommitmentConfirmed)
+	resp, err := c.rpcClient.GetLatestBlockhash(ctx, blockhashCommitment)
 	if err != nil {
 		return "", fmt.Errorf("error retrieving latest blockhash: %w", err)
 	}
@@ -97,7 +101,7 @@ func (c *SolanaGoClient) SimulateTransaction(ctx context.Context, serializedTx s
 		return 0, fmt.Errorf("error deserializing transaction for simulation: %w", err)
 	}
 
-	resp, err := c.rpcClient.SimulateTransactionWithOpts(ctx, tx, &rpc.SimulateTransactionOpts{})
+	resp, err := c.rpcClient.SimulateTransactionWithOpts(ctx, tx, &rpc.SimulateTransactionOpts{Commitment: blockhashCommitment})
 	if err != nil {
 		return 0, fmt.Errorf("error simulating transaction: %w", err)
 	}
@@ -120,12 +124,50 @@ func (c *SolanaGoClient) SendTransaction(ctx context.Context, signedTransaction 
 		return "", fmt.Errorf("error deserializing signed transaction: %w", err)
 	}
 
-	sig, err := c.rpcClient.SendTransaction(ctx, tx)
+	sig, err := c.rpcClient.SendTransactionWithOpts(ctx, tx, rpc.TransactionOpts{PreflightCommitment: blockhashCommitment})
 	if err != nil {
 		return "", fmt.Errorf("error sending transaction to network: %w", err)
 	}
 
 	return sig.String(), nil
+}
+
+func (c *SolanaGoClient) GetSignatureStatus(ctx context.Context, signature string) (*SignatureStatus, error) {
+	sig, err := solana.SignatureFromBase58(signature)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing signature %s: %w", signature, err)
+	}
+
+	resp, err := c.rpcClient.GetSignatureStatuses(ctx, true, sig)
+	if err != nil {
+		if errors.Is(err, rpc.ErrNotFound) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("error retrieving signature status: %w", err)
+	}
+	if len(resp.Value) == 0 || resp.Value[0] == nil {
+		return nil, nil
+	}
+
+	status := resp.Value[0]
+	return &SignatureStatus{Failed: status.Err != nil, ConfirmationStatus: string(status.ConfirmationStatus)}, nil
+}
+
+func (c *SolanaGoClient) IsBlockhashValid(ctx context.Context, blockhash string) (bool, error) {
+	hash, err := solana.HashFromBase58(blockhash)
+	if err != nil {
+		return false, fmt.Errorf("error parsing blockhash %s: %w", blockhash, err)
+	}
+
+	resp, err := c.rpcClient.IsBlockhashValid(ctx, hash, blockhashCommitment)
+	if err != nil {
+		return false, fmt.Errorf("error checking blockhash validity: %w", err)
+	}
+	if resp == nil {
+		return false, fmt.Errorf("node returned no blockhash validity")
+	}
+
+	return resp.Value, nil
 }
 
 func (c *SolanaGoClient) GetBalance(ctx context.Context, account string) (*amount.Amount, error) {

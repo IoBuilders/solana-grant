@@ -2,6 +2,7 @@ package retrysvmtransaction
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	custodykeyfactory "dlt-ingress/src/main/dltingress/internal/domain/custodykey"
@@ -17,6 +18,7 @@ import (
 	"dlt-ingress/src/main/config"
 	"dlt-ingress/src/main/dltingress/internal/domain/common"
 	"dlt-ingress/src/main/dltingress/internal/domain/custodykey"
+	domainerrors2 "dlt-ingress/src/main/dltingress/internal/domain/domainerrors"
 	"dlt-ingress/src/main/dltingress/internal/domain/transaction"
 	"dlt-ingress/src/main/dltingress/internal/infra/custody"
 	custodymock "dlt-ingress/src/main/dltingress/internal/infra/custody/mock"
@@ -28,6 +30,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/domain/amount"
 	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/domain/domainerrors"
+	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/error/coreerror"
 	testbus "gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/test/core/event"
 )
 
@@ -193,6 +196,15 @@ func expectFindByTxId(tc *testContext, ctx context.Context, tx *svmtransaction.S
 	tc.transactionRepository.On("FindByTxId", ctx, tx.TxId).Return(tx, nil)
 }
 
+// expectOriginalCannotLand makes the chain report the original as dead: never retried before, no
+// record of its signature, and its blockhash expired.
+func expectOriginalCannotLand(tc *testContext, ctx context.Context, oldTx *svmtransaction.SvmTransaction) {
+	tc.svmClientRegistry.On("GetClientForNetworkId", validNetworkId).Return(tc.svmClient, nil)
+	tc.transactionRepository.On("ExistsByOriginalTxId", ctx, oldTx.TxId).Return(false, nil)
+	tc.svmClient.On("GetSignatureStatus", ctx, oldTx.TxId).Return(nil, nil)
+	tc.svmClient.On("IsBlockhashValid", ctx, oldTx.RecentBlockhash).Return(false, nil)
+}
+
 func expectCustodyKeysExist(tc *testContext, ctx context.Context, signerIds []string, custodyKeys []*custodykey.CustodyKey) {
 	tc.custodyKeyExistMultipleService.On("Execute", ctx, signerIds).Return(custodyKeys, nil)
 }
@@ -263,6 +275,7 @@ func TestDltIngressRetrySvmTransactionCommandHandler_Handle_Success_ReusesOrigin
 
 	tc.boundedBlockingQueue.On("Put", ctx, validNetworkId, mock.Anything).Return(nil)
 	expectFindByTxId(tc, ctx, oldTx)
+	expectOriginalCannotLand(tc, ctx, oldTx)
 	expectSingleSignerCustodyKey(tc, ctx, oldTx.FeePayer, custodyKey)
 	expectFreshBlockhash(tc, ctx)
 
@@ -326,6 +339,7 @@ func TestDltIngressRetrySvmTransactionCommandHandler_Handle_CuLimitAndCuPriceOve
 
 	tc.boundedBlockingQueue.On("Put", ctx, validNetworkId, mock.Anything).Return(nil)
 	expectFindByTxId(tc, ctx, oldTx)
+	expectOriginalCannotLand(tc, ctx, oldTx)
 	expectSingleSignerCustodyKey(tc, ctx, oldTx.FeePayer, custodyKey)
 	expectFreshBlockhash(tc, ctx)
 
@@ -394,6 +408,7 @@ func TestDltIngressRetrySvmTransactionCommandHandler_Handle_MultipleSigners_AllG
 
 	tc.boundedBlockingQueue.On("Put", ctx, validNetworkId, mock.Anything).Return(nil)
 	expectFindByTxId(tc, ctx, oldTx)
+	expectOriginalCannotLand(tc, ctx, oldTx)
 	tc.custodyKeyExistMultipleService.
 		On("Execute", ctx, mock.MatchedBy(func(ids []string) bool {
 			return len(ids) == 2 && containsAll(ids, testFeePayer.String(), secondSigner.String())
@@ -452,6 +467,7 @@ func TestDltIngressRetrySvmTransactionCommandHandler_Handle_UseMultiplier_BumpsC
 
 	tc.boundedBlockingQueue.On("Put", ctx, validNetworkId, mock.Anything).Return(nil)
 	expectFindByTxId(tc, ctx, oldTx)
+	expectOriginalCannotLand(tc, ctx, oldTx)
 	expectSingleSignerCustodyKey(tc, ctx, oldTx.FeePayer, custodyKey)
 	expectFreshBlockhash(tc, ctx)
 
@@ -500,6 +516,7 @@ func TestDltIngressRetrySvmTransactionCommandHandler_Handle_CustodyKeyNotFound_R
 	tc.boundedBlockingQueue.On("Put", ctx, validNetworkId, mock.Anything).Return(nil)
 	tc.boundedBlockingQueue.On("Take", ctx, validNetworkId).Return(nil)
 	expectFindByTxId(tc, ctx, oldTx)
+	expectOriginalCannotLand(tc, ctx, oldTx)
 	tc.custodyKeyExistMultipleService.On("Execute", ctx, []string{oldTx.FeePayer}).
 		Return(nil, domainerrors.NewEntityNotFoundDomainError("CustodyKey", oldTx.FeePayer))
 
@@ -528,6 +545,7 @@ func TestDltIngressRetrySvmTransactionCommandHandler_Handle_SignFailure_Releases
 	tc.boundedBlockingQueue.On("Put", ctx, validNetworkId, mock.Anything).Return(nil)
 	tc.boundedBlockingQueue.On("Take", ctx, validNetworkId).Return(nil)
 	expectFindByTxId(tc, ctx, oldTx)
+	expectOriginalCannotLand(tc, ctx, oldTx)
 	expectSingleSignerCustodyKey(tc, ctx, oldTx.FeePayer, custodyKey)
 	expectFreshBlockhash(tc, ctx)
 
@@ -558,6 +576,7 @@ func TestDltIngressRetrySvmTransactionCommandHandler_Handle_SendFailure_HardDele
 	tc.boundedBlockingQueue.On("Put", ctx, validNetworkId, mock.Anything).Return(nil)
 	tc.boundedBlockingQueue.On("Take", ctx, validNetworkId).Return(nil)
 	expectFindByTxId(tc, ctx, oldTx)
+	expectOriginalCannotLand(tc, ctx, oldTx)
 	expectSingleSignerCustodyKey(tc, ctx, oldTx.FeePayer, custodyKey)
 	expectFreshBlockhash(tc, ctx)
 	expectSign(tc, ctx, func(req *custody.SignRequest) bool { return true })
@@ -586,4 +605,94 @@ func TestDltIngressRetrySvmTransactionCommandHandler_Handle_SendFailure_HardDele
 	tc.boundedBlockingQueue.AssertExpectations(t)
 	tc.transactionRepository.AssertExpectations(t)
 	tc.eventBus.AssertNotCalled(t, "Publish", mock.Anything, mock.Anything)
+}
+
+// assertRetryRefused checks a refused retry is a conflict that leaves nothing behind: no queue slot taken,
+// nothing signed, stored or sent.
+func assertRetryRefused(t *testing.T, tc *testContext, resp *Response, err error, code coreerror.ErrorCode) {
+	t.Helper()
+	assert.Nil(t, resp)
+	require.Error(t, err)
+	assert.ErrorIs(t, err, coreerror.ErrConflict)
+	var domainErr coreerror.DomainError
+	require.ErrorAs(t, err, &domainErr)
+	assert.Equal(t, code, domainErr.ErrorCode())
+	tc.boundedBlockingQueue.AssertNotCalled(t, "Put", mock.Anything, mock.Anything, mock.Anything)
+	tc.svmClient.AssertNotCalled(t, "GetRecentBlockhash", mock.Anything)
+	tc.custodyProvider.AssertNotCalled(t, "Sign", mock.Anything, mock.Anything)
+	tc.transactionRepository.AssertNotCalled(t, "Save", mock.Anything, mock.Anything)
+	tc.eventBus.AssertNotCalled(t, "Publish", mock.Anything, mock.Anything)
+}
+
+func newRefusalFixture(t *testing.T) (*testContext, context.Context, *svmtransaction.SvmTransaction) {
+	t.Helper()
+	cuLimit, _ := amount.NewFromString("200000")
+	cuPrice, _ := amount.NewFromString("5000")
+	oldTx := buildOldTx(t, cuLimit, cuPrice)
+	tc := newTestContext()
+	ctx := context.Background()
+	expectFindByTxId(tc, ctx, oldTx)
+	tc.svmClientRegistry.On("GetClientForNetworkId", validNetworkId).Return(tc.svmClient, nil)
+	return tc, ctx, oldTx
+}
+
+func TestDltIngressRetrySvmTransactionCommandHandler_Handle_OriginalAlreadyLanded_Refused(t *testing.T) {
+	for _, failed := range []bool{false, true} {
+		t.Run(fmt.Sprintf("failed=%t", failed), func(t *testing.T) {
+			tc, ctx, oldTx := newRefusalFixture(t)
+			tc.transactionRepository.On("ExistsByOriginalTxId", ctx, oldTx.TxId).Return(false, nil)
+			tc.svmClient.On("GetSignatureStatus", ctx, oldTx.TxId).
+				Return(&svm.SignatureStatus{Failed: failed, ConfirmationStatus: "confirmed"}, nil)
+
+			resp, err := tc.handler.Handle(ctx, &Command{TransactionHash: oldTx.TxId})
+
+			assertRetryRefused(t, tc, resp, err, domainerrors2.ErrorCodeSvmTransactionAlreadyLanded)
+			tc.svmClient.AssertNotCalled(t, "IsBlockhashValid", mock.Anything, mock.Anything)
+		})
+	}
+}
+
+func TestDltIngressRetrySvmTransactionCommandHandler_Handle_OriginalBlockhashStillValid_Refused(t *testing.T) {
+	tc, ctx, oldTx := newRefusalFixture(t)
+	tc.transactionRepository.On("ExistsByOriginalTxId", ctx, oldTx.TxId).Return(false, nil)
+	tc.svmClient.On("GetSignatureStatus", ctx, oldTx.TxId).Return(nil, nil)
+	tc.svmClient.On("IsBlockhashValid", ctx, oldTx.RecentBlockhash).Return(true, nil)
+
+	resp, err := tc.handler.Handle(ctx, &Command{TransactionHash: oldTx.TxId})
+
+	assertRetryRefused(t, tc, resp, err, domainerrors2.ErrorCodeSvmTransactionMayStillLand)
+}
+
+func TestDltIngressRetrySvmTransactionCommandHandler_Handle_AlreadyRetried_Refused(t *testing.T) {
+	tc, ctx, oldTx := newRefusalFixture(t)
+	tc.transactionRepository.On("ExistsByOriginalTxId", ctx, oldTx.TxId).Return(true, nil)
+
+	resp, err := tc.handler.Handle(ctx, &Command{TransactionHash: oldTx.TxId})
+
+	assertRetryRefused(t, tc, resp, err, domainerrors2.ErrorCodeSvmAlreadyRetried)
+	tc.svmClient.AssertNotCalled(t, "GetSignatureStatus", mock.Anything, mock.Anything)
+}
+
+func TestDltIngressRetrySvmTransactionCommandHandler_Handle_RetryOfARetry_Refused(t *testing.T) {
+	tc, ctx, oldTx := newRefusalFixture(t)
+	originalTxId := "the-original-signature"
+	oldTx.OriginalTxId = &originalTxId
+
+	resp, err := tc.handler.Handle(ctx, &Command{TransactionHash: oldTx.TxId})
+
+	assertRetryRefused(t, tc, resp, err, domainerrors2.ErrorCodeSvmRetryOfRetry)
+	tc.transactionRepository.AssertNotCalled(t, "ExistsByOriginalTxId", mock.Anything, mock.Anything)
+}
+
+func TestDltIngressRetrySvmTransactionCommandHandler_Handle_ChainLookupFails_RefusedWithoutTakingASlot(t *testing.T) {
+	tc, ctx, oldTx := newRefusalFixture(t)
+	tc.transactionRepository.On("ExistsByOriginalTxId", ctx, oldTx.TxId).Return(false, nil)
+	tc.svmClient.On("GetSignatureStatus", ctx, oldTx.TxId).Return(nil, assert.AnError)
+
+	resp, err := tc.handler.Handle(ctx, &Command{TransactionHash: oldTx.TxId})
+
+	assert.Nil(t, resp)
+	assert.ErrorIs(t, err, assert.AnError, "an unknown chain state must not be read as 'safe to retry'")
+	tc.boundedBlockingQueue.AssertNotCalled(t, "Put", mock.Anything, mock.Anything, mock.Anything)
+	tc.custodyProvider.AssertNotCalled(t, "Sign", mock.Anything, mock.Anything)
 }

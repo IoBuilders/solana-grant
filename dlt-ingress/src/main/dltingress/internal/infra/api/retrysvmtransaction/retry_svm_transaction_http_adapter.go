@@ -25,6 +25,11 @@ func NewEndpoint(commandBus command.Bus) *Endpoint {
 // @Summary      Retry an existing SVM transaction
 // @Description  Retries a previously submitted Solana transaction that is stored in the system and has not landed on-chain yet.
 // @Description
+// @Description  A retry is a different transaction (new blockhash, new signature), so the original must be provably dead
+// @Description  or both could execute. It is refused with 409 unless the node has no record of the original's signature
+// @Description  and its blockhash has expired (about 60-90 seconds after it was fetched). A transaction that landed
+// @Description  with an error counts as landed. Only an original can be retried, and only once.
+// @Description
 // @Description  The request must include the signature of the original transaction. A fresh blockhash is always
 // @Description  fetched and the transaction re-signed; the rest of the instructions are carried over unchanged.
 // @Description
