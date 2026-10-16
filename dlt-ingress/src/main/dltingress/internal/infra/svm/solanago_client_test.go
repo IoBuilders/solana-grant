@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -18,6 +19,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// A well-formed 64-byte signature; the content is irrelevant because the node is a stub.
+const testSignature = "5VERv8NMvzbJMEkV8xnrLkEaWRtSz9CosKDYjCJjBRnbJLgp8uirBgmQpjKhoR4tjF3ZpRzrFmBV6UjKdiSZkQUW"
 
 type recordedRpcRequest struct {
 	Method string            `json:"method"`
@@ -131,4 +135,84 @@ func TestDltIngressSvmSolanaGoClient_GetRecentBlockhash_UsesConfirmedCommitment(
 
 	require.NoError(t, err)
 	assert.Equal(t, "confirmed", lastParamAsMap(t, recorded.Load())["commitment"])
+}
+
+func TestDltIngressSvmSolanaGoClient_GetSignatureStatus_SearchesHistory(t *testing.T) {
+	node, recorded := newRecordingSolanaNode(t, `{"context":{"slot":9},"value":[{"slot":8,"confirmations":null,"err":null,"confirmationStatus":"finalized"}]}`)
+	client := svm.NewSolanaGoClient(node.URL)
+	t.Cleanup(func() { _ = client.Close() })
+
+	status, err := client.GetSignatureStatus(context.Background(), testSignature)
+
+	require.NoError(t, err)
+	require.NotNil(t, status)
+	assert.False(t, status.Failed)
+	assert.Equal(t, "finalized", status.ConfirmationStatus)
+	assert.Equal(t, "getSignatureStatuses", recorded.Load().Method)
+	require.Len(t, recorded.Load().Params, 2)
+	assert.JSONEq(t, `{"searchTransactionHistory":true}`, string(recorded.Load().Params[1]),
+		"without a history search a landed transaction older than the recent status cache looks unknown")
+}
+
+func TestDltIngressSvmSolanaGoClient_GetSignatureStatus_FailedTransactionIsReportedAsFailed(t *testing.T) {
+	node, _ := newRecordingSolanaNode(t, `{"context":{"slot":9},"value":[{"slot":8,"confirmations":1,"err":{"InstructionError":[0,{"Custom":1}]},"confirmationStatus":"confirmed"}]}`)
+	client := svm.NewSolanaGoClient(node.URL)
+	t.Cleanup(func() { _ = client.Close() })
+
+	status, err := client.GetSignatureStatus(context.Background(), testSignature)
+
+	require.NoError(t, err)
+	require.NotNil(t, status)
+	assert.True(t, status.Failed)
+}
+
+func TestDltIngressSvmSolanaGoClient_GetSignatureStatus_UnknownSignature_ReturnsNil(t *testing.T) {
+	node, _ := newRecordingSolanaNode(t, `{"context":{"slot":9},"value":[null]}`)
+	client := svm.NewSolanaGoClient(node.URL)
+	t.Cleanup(func() { _ = client.Close() })
+
+	status, err := client.GetSignatureStatus(context.Background(), testSignature)
+
+	require.NoError(t, err)
+	assert.Nil(t, status)
+}
+
+func TestDltIngressSvmSolanaGoClient_GetSignatureStatus_InvalidSignature_DoesNotReachNode(t *testing.T) {
+	node, recorded := newRecordingSolanaNode(t, `{"context":{"slot":9},"value":[null]}`)
+	client := svm.NewSolanaGoClient(node.URL)
+	t.Cleanup(func() { _ = client.Close() })
+
+	_, err := client.GetSignatureStatus(context.Background(), "not-a-signature")
+
+	assert.Error(t, err)
+	assert.Nil(t, recorded.Load())
+}
+
+func TestDltIngressSvmSolanaGoClient_IsBlockhashValid(t *testing.T) {
+	for _, valid := range []bool{true, false} {
+		t.Run(fmt.Sprintf("valid=%t", valid), func(t *testing.T) {
+			node, recorded := newRecordingSolanaNode(t, fmt.Sprintf(`{"context":{"slot":9},"value":%t}`, valid))
+			client := svm.NewSolanaGoClient(node.URL)
+			t.Cleanup(func() { _ = client.Close() })
+
+			got, err := client.IsBlockhashValid(context.Background(), "4uQeVj5tqViQh7yWWGStvkEG1Zmhx6uasJtWCJziofM")
+
+			require.NoError(t, err)
+			assert.Equal(t, valid, got)
+			assert.Equal(t, "isBlockhashValid", recorded.Load().Method)
+			assert.Equal(t, "confirmed", lastParamAsMap(t, recorded.Load())["commitment"],
+				"the blockhash was fetched at confirmed, so validity must be judged at confirmed")
+		})
+	}
+}
+
+func TestDltIngressSvmSolanaGoClient_IsBlockhashValid_InvalidBlockhash_DoesNotReachNode(t *testing.T) {
+	node, recorded := newRecordingSolanaNode(t, `{"context":{"slot":9},"value":true}`)
+	client := svm.NewSolanaGoClient(node.URL)
+	t.Cleanup(func() { _ = client.Close() })
+
+	_, err := client.IsBlockhashValid(context.Background(), "not-a-blockhash")
+
+	assert.Error(t, err)
+	assert.Nil(t, recorded.Load())
 }
