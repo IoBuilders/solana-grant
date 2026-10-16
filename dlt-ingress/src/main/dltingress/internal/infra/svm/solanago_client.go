@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"dlt-ingress/src/main/dltingress/internal/infra/noderatelimit"
+
 	"gitlab.com/iobuilders/projects/eng/iob-core/iob-go-core/v4/src/main/core/domain/amount"
 
 	"github.com/gagliardetto/solana-go"
@@ -28,6 +29,8 @@ const (
 // blockhashNotFoundReason is the literal value Solana nodes put in a simulation's top-level
 // TransactionError when the submitted recent blockhash is no longer known to the cluster.
 const blockhashNotFoundReason = "BlockhashNotFound"
+
+const blockhashCommitment = rpc.CommitmentConfirmed
 
 type SolanaGoClient struct {
 	rpcClient *rpc.Client
@@ -61,7 +64,7 @@ func newHTTPTransport() *http.Transport {
 }
 
 func (c *SolanaGoClient) GetRecentBlockhash(ctx context.Context) (string, error) {
-	resp, err := c.rpcClient.GetLatestBlockhash(ctx, rpc.CommitmentConfirmed)
+	resp, err := c.rpcClient.GetLatestBlockhash(ctx, blockhashCommitment)
 	if err != nil {
 		return "", fmt.Errorf("error retrieving latest blockhash: %w", err)
 	}
@@ -97,7 +100,7 @@ func (c *SolanaGoClient) SimulateTransaction(ctx context.Context, serializedTx s
 		return 0, fmt.Errorf("error deserializing transaction for simulation: %w", err)
 	}
 
-	resp, err := c.rpcClient.SimulateTransactionWithOpts(ctx, tx, &rpc.SimulateTransactionOpts{})
+	resp, err := c.rpcClient.SimulateTransactionWithOpts(ctx, tx, &rpc.SimulateTransactionOpts{Commitment: blockhashCommitment})
 	if err != nil {
 		return 0, fmt.Errorf("error simulating transaction: %w", err)
 	}
@@ -120,7 +123,7 @@ func (c *SolanaGoClient) SendTransaction(ctx context.Context, signedTransaction 
 		return "", fmt.Errorf("error deserializing signed transaction: %w", err)
 	}
 
-	sig, err := c.rpcClient.SendTransaction(ctx, tx)
+	sig, err := c.rpcClient.SendTransactionWithOpts(ctx, tx, rpc.TransactionOpts{PreflightCommitment: blockhashCommitment})
 	if err != nil {
 		return "", fmt.Errorf("error sending transaction to network: %w", err)
 	}

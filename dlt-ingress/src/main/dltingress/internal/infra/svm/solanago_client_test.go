@@ -4,6 +4,7 @@ package svm_test
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 
 	"dlt-ingress/src/main/dltingress/internal/infra/svm"
 
+	"github.com/gagliardetto/solana-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -66,4 +68,67 @@ func TestDltIngressSvmSolanaGoClient_GetRecentPrioritizationFees_InvalidAccount_
 
 	assert.ErrorContains(t, err, "not-a-public-key")
 	assert.Nil(t, recorded.Load(), "an unparseable account must fail before the node is called")
+}
+
+func serializedTestTransaction(t *testing.T) string {
+	t.Helper()
+	payer := solana.MustPublicKeyFromBase58("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")
+	tx, err := solana.NewTransaction(
+		[]solana.Instruction{solana.NewInstruction(solana.SystemProgramID, solana.AccountMetaSlice{solana.Meta(payer).WRITE().SIGNER()}, []byte{})},
+		solana.MustHashFromBase58("4uQeVj5tqViQh7yWWGStvkEG1Zmhx6uasJtWCJziofM"),
+		solana.TransactionPayer(payer),
+	)
+	require.NoError(t, err)
+	data, err := tx.MarshalBinary()
+	require.NoError(t, err)
+	return base64.StdEncoding.EncodeToString(data)
+}
+
+func lastParamAsMap(t *testing.T, req *recordedRpcRequest) map[string]any {
+	t.Helper()
+	require.NotNil(t, req)
+	require.NotEmpty(t, req.Params)
+	var opts map[string]any
+	require.NoError(t, json.Unmarshal(req.Params[len(req.Params)-1], &opts))
+	return opts
+}
+
+func TestDltIngressSvmSolanaGoClient_SimulateTransaction_UsesConfirmedCommitment(t *testing.T) {
+	node, recorded := newRecordingSolanaNode(t, `{"context":{"slot":1},"value":{"err":null,"logs":[],"unitsConsumed":1234}}`)
+	client := svm.NewSolanaGoClient(node.URL)
+	t.Cleanup(func() { _ = client.Close() })
+
+	units, err := client.SimulateTransaction(context.Background(), serializedTestTransaction(t))
+
+	require.NoError(t, err)
+	assert.Equal(t, uint64(1234), units)
+	assert.Equal(t, "simulateTransaction", recorded.Load().Method)
+	assert.Equal(t, "confirmed", lastParamAsMap(t, recorded.Load())["commitment"],
+		"the blockhash is fetched at confirmed, so simulation must run at confirmed too")
+}
+
+func TestDltIngressSvmSolanaGoClient_SendTransaction_UsesConfirmedPreflightCommitment(t *testing.T) {
+	node, recorded := newRecordingSolanaNode(t, `"5VERv8NMvzbJMEkV8xnrLkEaWRtSz9CosKDYjCJjBRnbJLgp8uirBgmQpjKhoR4tjF3ZpRzrFmBV6UjKdiSZkQUW"`)
+	client := svm.NewSolanaGoClient(node.URL)
+	t.Cleanup(func() { _ = client.Close() })
+
+	_, err := client.SendTransaction(context.Background(), serializedTestTransaction(t))
+
+	require.NoError(t, err)
+	assert.Equal(t, "sendTransaction", recorded.Load().Method)
+	opts := lastParamAsMap(t, recorded.Load())
+	assert.Equal(t, "confirmed", opts["preflightCommitment"],
+		"the blockhash is fetched at confirmed, so preflight must run at confirmed too")
+	assert.NotEqual(t, true, opts["skipPreflight"])
+}
+
+func TestDltIngressSvmSolanaGoClient_GetRecentBlockhash_UsesConfirmedCommitment(t *testing.T) {
+	node, recorded := newRecordingSolanaNode(t, `{"context":{"slot":1},"value":{"blockhash":"4uQeVj5tqViQh7yWWGStvkEG1Zmhx6uasJtWCJziofM","lastValidBlockHeight":100}}`)
+	client := svm.NewSolanaGoClient(node.URL)
+	t.Cleanup(func() { _ = client.Close() })
+
+	_, err := client.GetRecentBlockhash(context.Background())
+
+	require.NoError(t, err)
+	assert.Equal(t, "confirmed", lastParamAsMap(t, recorded.Load())["commitment"])
 }
