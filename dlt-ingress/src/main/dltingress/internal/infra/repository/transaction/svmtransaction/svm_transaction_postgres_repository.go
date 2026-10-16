@@ -34,6 +34,14 @@ func (r *Postgres) FindByTxId(ctx context.Context, txId string) (*svmtransaction
 	return &entity, nil
 }
 
+func (r *Postgres) ExistsByOriginalTxId(ctx context.Context, originalTxId string) (bool, error) {
+	var count int64
+	if err := r.getDB(ctx).Model(&SvmTransaction{}).Where("original_tx_id = ?", originalTxId).Limit(1).Count(&count).Error; err != nil {
+		return false, fmt.Errorf("failed to look up retries of SVM transaction: %w", err)
+	}
+	return count > 0, nil
+}
+
 func (r *Postgres) HardDelete(ctx context.Context, svm *svmtransaction.SvmTransaction) error {
 	rec := FromDomain(*svm)
 	if err := r.getDB(ctx).Unscoped().Delete(&rec).Error; err != nil {

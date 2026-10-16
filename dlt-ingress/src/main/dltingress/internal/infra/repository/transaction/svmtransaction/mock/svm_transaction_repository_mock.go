@@ -13,6 +13,11 @@ func (m *Postgres) FindByTxId(ctx context.Context, txId string) (*svmtransaction
 	return args.Get(0).(*svmtransaction.SvmTransaction), args.Error(1)
 }
 
+func (m *Postgres) ExistsByOriginalTxId(ctx context.Context, originalTxId string) (bool, error) {
+	args := m.Called(ctx, originalTxId)
+	return args.Bool(0), args.Error(1)
+}
+
 func (m *Postgres) HardDelete(ctx context.Context, entity *svmtransaction.SvmTransaction) error {
 	args := m.Called(ctx, entity)
 	return args.Error(0)

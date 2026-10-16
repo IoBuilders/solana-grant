@@ -15,6 +15,8 @@ const (
 	methodGetRecentPrioritizationFees = "getRecentPrioritizationFees"
 	methodSimulateTransaction         = "simulateTransaction"
 	methodSendTransaction             = "sendTransaction"
+	methodGetSignatureStatuses        = "getSignatureStatuses"
+	methodIsBlockhashValid            = "isBlockhashValid"
 	methodGetBalance                  = "getBalance"
 	methodGetHealth                   = "getHealth"
 )
@@ -52,6 +54,18 @@ func (c *rateLimitedClient) SimulateTransaction(ctx context.Context, serializedT
 func (c *rateLimitedClient) SendTransaction(ctx context.Context, signedTransaction string) (string, error) {
 	return noderatelimit.Call(ctx, c.guard, methodSendTransaction, func() (string, error) {
 		return c.inner.SendTransaction(ctx, signedTransaction)
+	})
+}
+
+func (c *rateLimitedClient) GetSignatureStatus(ctx context.Context, signature string) (*SignatureStatus, error) {
+	return noderatelimit.Call(ctx, c.guard, methodGetSignatureStatuses, func() (*SignatureStatus, error) {
+		return c.inner.GetSignatureStatus(ctx, signature)
+	})
+}
+
+func (c *rateLimitedClient) IsBlockhashValid(ctx context.Context, blockhash string) (bool, error) {
+	return noderatelimit.Call(ctx, c.guard, methodIsBlockhashValid, func() (bool, error) {
+		return c.inner.IsBlockhashValid(ctx, blockhash)
 	})
 }
 

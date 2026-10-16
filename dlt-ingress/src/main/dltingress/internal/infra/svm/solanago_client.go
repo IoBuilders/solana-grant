@@ -2,6 +2,7 @@ package svm
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/big"
 	"net"
@@ -129,6 +130,44 @@ func (c *SolanaGoClient) SendTransaction(ctx context.Context, signedTransaction 
 	}
 
 	return sig.String(), nil
+}
+
+func (c *SolanaGoClient) GetSignatureStatus(ctx context.Context, signature string) (*SignatureStatus, error) {
+	sig, err := solana.SignatureFromBase58(signature)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing signature %s: %w", signature, err)
+	}
+
+	resp, err := c.rpcClient.GetSignatureStatuses(ctx, true, sig)
+	if err != nil {
+		if errors.Is(err, rpc.ErrNotFound) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("error retrieving signature status: %w", err)
+	}
+	if len(resp.Value) == 0 || resp.Value[0] == nil {
+		return nil, nil
+	}
+
+	status := resp.Value[0]
+	return &SignatureStatus{Failed: status.Err != nil, ConfirmationStatus: string(status.ConfirmationStatus)}, nil
+}
+
+func (c *SolanaGoClient) IsBlockhashValid(ctx context.Context, blockhash string) (bool, error) {
+	hash, err := solana.HashFromBase58(blockhash)
+	if err != nil {
+		return false, fmt.Errorf("error parsing blockhash %s: %w", blockhash, err)
+	}
+
+	resp, err := c.rpcClient.IsBlockhashValid(ctx, hash, blockhashCommitment)
+	if err != nil {
+		return false, fmt.Errorf("error checking blockhash validity: %w", err)
+	}
+	if resp == nil {
+		return false, fmt.Errorf("node returned no blockhash validity")
+	}
+
+	return resp.Value, nil
 }
 
 func (c *SolanaGoClient) GetBalance(ctx context.Context, account string) (*amount.Amount, error) {

@@ -65,6 +65,10 @@ func (h *CommandHandler) Handle(ctx context.Context, cmd *Command) (*Response, e
 		return nil, err
 	}
 
+	if err := h.ensureOriginalCannotLand(ctx, oldTx, network); err != nil {
+		return nil, err
+	}
+
 	if err := h.boundedBlockingQueue.Put(ctx, network.Id, uuid.New()); err != nil {
 		return nil, err
 	}
@@ -142,6 +146,53 @@ func (h *CommandHandler) Handle(ctx context.Context, cmd *Command) (*Response, e
 	}
 
 	return &Response{evt}, nil
+}
+
+// ensureOriginalCannotLand refuses the retry unless the transaction being replaced is provably dead. A
+// retry carries a fresh blockhash, so it is a different transaction with a different signature: if the
+// original landed, or still can, both execute and the instructions run twice. It is dead only when the
+// node has no record of its signature and its blockhash has expired. It also keeps to one retry per
+// original, so there is never more than one replacement whose fate needs checking. It runs before a
+// queue slot is taken, so a refusal leaks none.
+func (h *CommandHandler) ensureOriginalCannotLand(
+	ctx context.Context,
+	oldTx *svmtransaction.SvmTransaction,
+	network *config.NetworkConfig,
+) error {
+	if oldTx.OriginalTxId != nil {
+		return domainerrors.NewSvmRetryOfRetryDomainError(oldTx.TxId, *oldTx.OriginalTxId)
+	}
+
+	retried, err := h.svmTransactionRepository.ExistsByOriginalTxId(ctx, oldTx.TxId)
+	if err != nil {
+		return err
+	}
+	if retried {
+		return domainerrors.NewSvmAlreadyRetriedDomainError(oldTx.TxId)
+	}
+
+	client, err := h.svmClientRegistry.GetClientForNetworkId(network.Id)
+	if err != nil {
+		return err
+	}
+
+	status, err := client.GetSignatureStatus(ctx, oldTx.TxId)
+	if err != nil {
+		return err
+	}
+	if status != nil {
+		return domainerrors.NewSvmTransactionAlreadyLandedDomainError(oldTx.TxId, status.ConfirmationStatus, status.Failed)
+	}
+
+	valid, err := client.IsBlockhashValid(ctx, oldTx.RecentBlockhash)
+	if err != nil {
+		return err
+	}
+	if valid {
+		return domainerrors.NewSvmTransactionMayStillLandDomainError(oldTx.TxId, oldTx.RecentBlockhash)
+	}
+
+	return nil
 }
 
 // buildRetryTransaction decodes the stored unsigned transaction, swaps in a fresh blockhash (Solana's
