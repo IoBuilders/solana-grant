@@ -22,6 +22,10 @@ const (
 	ErrorCodeCallDataArgNameTaken            coreerror.ErrorCode = "CALL_DATA_ARG_NAME_TAKEN"
 	ErrorCodeNestedCallEncoding              coreerror.ErrorCode = "NESTED_CALL_ENCODING"
 	ErrorCodeInvalidStoredSvmTransaction     coreerror.ErrorCode = "INVALID_STORED_SVM_TRANSACTION"
+	ErrorCodeSvmRetryOfRetry                 coreerror.ErrorCode = "SVM_RETRY_OF_RETRY"
+	ErrorCodeSvmAlreadyRetried               coreerror.ErrorCode = "SVM_ALREADY_RETRIED"
+	ErrorCodeSvmTransactionAlreadyLanded     coreerror.ErrorCode = "SVM_TRANSACTION_ALREADY_LANDED"
+	ErrorCodeSvmTransactionMayStillLand      coreerror.ErrorCode = "SVM_TRANSACTION_MAY_STILL_LAND"
 	ErrorCodeComputeUnitLimitOverflow        coreerror.ErrorCode = "COMPUTE_UNIT_LIMIT_OVERFLOW"
 	ErrorCodeSvmTransactionSizeExceedsLimit  coreerror.ErrorCode = "SVM_TRANSACTION_SIZE_EXCEEDS_LIMIT"
 	ErrorCodeSmartContractIdMismatch         coreerror.ErrorCode = "SMART_CONTRACT_ID_MISMATCH"
@@ -154,5 +158,37 @@ func NewSvmTransactionSizeExceedsLimitDomainError(size, limit int) error {
 	return coreerror.NewValidationDomainError(
 		ErrorCodeSvmTransactionSizeExceedsLimit,
 		fmt.Sprintf("serialized transaction size %d bytes exceeds the %d byte limit", size, limit),
+	)
+}
+
+func NewSvmRetryOfRetryDomainError(txId, originalTxId string) error {
+	return coreerror.NewConflictDomainError(
+		ErrorCodeSvmRetryOfRetry,
+		fmt.Sprintf("transaction %s is already a retry of %s: retry the original instead", txId, originalTxId),
+	)
+}
+
+func NewSvmAlreadyRetriedDomainError(txId string) error {
+	return coreerror.NewConflictDomainError(
+		ErrorCodeSvmAlreadyRetried,
+		fmt.Sprintf("transaction %s has already been retried: a transaction can be retried only once", txId),
+	)
+}
+
+func NewSvmTransactionAlreadyLandedDomainError(txId, confirmationStatus string, failed bool) error {
+	outcome := "succeeded"
+	if failed {
+		outcome = "failed"
+	}
+	return coreerror.NewConflictDomainError(
+		ErrorCodeSvmTransactionAlreadyLanded,
+		fmt.Sprintf("transaction %s already landed on-chain (%s, %s): retrying it would execute it again", txId, confirmationStatus, outcome),
+	)
+}
+
+func NewSvmTransactionMayStillLandDomainError(txId, blockhash string) error {
+	return coreerror.NewConflictDomainError(
+		ErrorCodeSvmTransactionMayStillLand,
+		fmt.Sprintf("transaction %s may still land: its blockhash %s has not expired yet, so retry once it has", txId, blockhash),
 	)
 }
